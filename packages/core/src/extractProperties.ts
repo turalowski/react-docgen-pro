@@ -7,25 +7,13 @@ import { resolveUnionBranches } from './handlers/union.js';
 const DEFAULT_MAX_DEPTH = 2;
 
 /**
- * Given the props type node, resolve its type via the checker and
- * walk `checker.getPropertiesOfType`, converting each property symbol
- * into a PropDescriptor. `checker.getPropertiesOfType` already flattens
- * `extends` chains, so no separate extends handler is needed.
- */
-export function extractProperties(
-  typeNode: ts.InterfaceDeclaration | ts.TypeAliasDeclaration,
-  checker: ts.TypeChecker
-): Record<string, PropDescriptor> {
-  const type = checker.getTypeAtLocation(typeNode);
-  return extractPropertiesFromType(type, typeNode, checker);
-}
-
-/**
- * Same as extractProperties, but takes an already-resolved ts.Type
- * rather than a top-level declaration node. Exists so union.ts can
- * recurse into each branch of a union-of-objects prop and extract
- * that branch's own props the same way we extract a top-level Props
- * interface's props.
+ * Given an already-resolved ts.Type, walks `checker.getPropertiesOfType`,
+ * converting each property symbol into a PropDescriptor.
+ * `checker.getPropertiesOfType` already flattens `extends`/intersection
+ * chains, so no separate extends/intersection handler is needed. Takes
+ * a raw ts.Type (rather than a declaration node) so it works equally
+ * for the top-level Props type, each branch of a union.ts split, and a
+ * recursive nested-object expansion below.
  *
  * A prop whose type is itself a plain object shape (a named interface
  * reference like `user: AvatarUser`, or an inline object type) gets

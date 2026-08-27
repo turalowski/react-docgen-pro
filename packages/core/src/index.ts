@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { createProgramForFile } from './program.js';
 import { resolvePropsType } from './resolvePropsType.js';
-import { extractProperties } from './extractProperties.js';
+import { extractPropertiesFromType } from './extractProperties.js';
 import { resolveUnionBranches } from './handlers/union.js';
 import type { Documentation, PropDescriptor, UnionBranch } from './types.js';
 
@@ -9,11 +9,6 @@ export type { Documentation, PropDescriptor, UnionBranch } from './types.js';
 
 /**
  * Entry point: TS/TSX file path in, Documentation JSON out.
- *
- * Current scope (matches fixture 01): a single exported `Props`
- * interface/type alias in the file, no extends/union/intersection/
- * generics handling yet. Each of those gets its own handler under
- * ./handlers as the fixture ladder progresses.
  */
 export function parse(filePath: string): Documentation {
   const program = createProgramForFile(filePath);
@@ -23,12 +18,13 @@ export function parse(filePath: string): Documentation {
     throw new Error(`Could not load source file: ${filePath}`);
   }
 
-  const propsTypeNode = resolvePropsType(sourceFile);
-  if (!propsTypeNode) {
+  const checker = program.getTypeChecker();
+
+  const resolved = resolvePropsType(sourceFile, checker);
+  if (!resolved) {
     throw new Error(`No "Props" interface or type alias found in: ${filePath}`);
   }
-
-  const checker = program.getTypeChecker();
+  const { type: topLevelType, contextNode, displayName, docSymbol } = resolved;
 
   // When the top-level Props type is itself a union of object shapes
   // (`export type InputProps = AProps | BProps | ...`), the flat
@@ -40,20 +36,18 @@ export function parse(filePath: string): Documentation {
   // present, it's also used to build a *union* (not intersection) flat
   // `props` map below, so every field from every branch shows up in
   // Controls, each keeping its own description where unambiguous.
-  const topLevelType = checker.getTypeAtLocation(propsTypeNode);
-  const elements = resolveUnionBranches(topLevelType, propsTypeNode, checker);
+  const elements = resolveUnionBranches(topLevelType, contextNode, checker);
 
   const props = elements
     ? mergePropsAcrossBranches(elements)
-    : extractProperties(propsTypeNode, checker);
+    : extractPropertiesFromType(topLevelType, contextNode, checker);
 
-  const symbol = checker.getSymbolAtLocation(propsTypeNode.name);
-  const description = symbol
-    ? ts.displayPartsToString(symbol.getDocumentationComment(checker)).trim() || undefined
+  const description = docSymbol
+    ? ts.displayPartsToString(docSymbol.getDocumentationComment(checker)).trim() || undefined
     : undefined;
 
   return {
-    displayName: propsTypeNode.name.text,
+    displayName,
     description,
     props,
     ...(elements ? { elements } : {}),

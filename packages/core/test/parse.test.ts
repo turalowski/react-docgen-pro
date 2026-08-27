@@ -380,6 +380,32 @@ describe('parse — component signature resolution (fixtures 16-19)', () => {
   });
 });
 
+describe('parse — cross-file props type + intersection (fixture 21)', () => {
+  it('resolves a props type declared in a separate types.ts, not this file', () => {
+    const result = parse(fixture('21-cross-file-intersection/Card.tsx'));
+    expect(result).toMatchSnapshot();
+  });
+
+  it('picks a clean display name from the intersection, not the full type string', () => {
+    const result = parse(fixture('21-cross-file-intersection/Card.tsx'));
+    expect(result.displayName).toBe('CardProps');
+  });
+
+  it('merges props from every constituent of the intersection', () => {
+    const result = parse(fixture('21-cross-file-intersection/Card.tsx'));
+    expect(Object.keys(result.props).sort()).toEqual([
+      'customClass',
+      'internalDebugId',
+      'title',
+    ]);
+  });
+
+  it('still follows a cross-file extends nested inside one intersection member', () => {
+    const result = parse(fixture('21-cross-file-intersection/Card.tsx'));
+    expect(result.props.customClass.description).toBe('Custom HTML class for the element.');
+  });
+});
+
 describe('parse — respects the consuming project\'s tsconfig.json (fixture 20)', () => {
   it('resolves a path-aliased cross-file extends via baseUrl/paths from the real tsconfig', () => {
     const result = parse(fixture('20-tsconfig-project/src/components/Card.tsx'));

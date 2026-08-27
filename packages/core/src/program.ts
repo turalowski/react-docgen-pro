@@ -30,8 +30,10 @@ export function createProgramForFile(filePath: string): ts.Program {
 }
 
 function resolveCompilerOptions(filePath: string): ts.CompilerOptions {
-  const configPath = ts.findConfigFile(path.dirname(filePath), ts.sys.fileExists);
-  if (!configPath) return FALLBACK_OPTIONS;
+  const foundPath = ts.findConfigFile(path.dirname(filePath), ts.sys.fileExists);
+  if (!foundPath) return FALLBACK_OPTIONS;
+
+  const configPath = resolveSolutionStyleReferences(foundPath);
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
   if (configFile.error) return FALLBACK_OPTIONS;
@@ -50,4 +52,45 @@ function resolveCompilerOptions(filePath: string): ts.CompilerOptions {
     ...parsed.options,
     jsx: parsed.options.jsx ?? ts.JsxEmit.ReactJSX,
   };
+}
+
+/**
+ * A "solution-style" root tsconfig.json — `{ "files": [], "references":
+ * [...] }`, common in real projects split into build/test/etc. sub-
+ * projects — declares no compilerOptions of its own; the actual settings
+ * (target, paths, jsx, ...) live in one of the referenced configs. Taking
+ * such a root at face value silently produces near-empty options: no
+ * `paths`, meaning any path-aliased import — including a cross-file
+ * `extends` base interface reached that way — fails to resolve.
+ *
+ * Follows the first `references` entry (recursively, depth-bounded)
+ * until landing on a config that either declares its own compilerOptions
+ * (which may itself `extends` a base config — parseJsonConfigFileContent
+ * follows that chain natively) or has no further references to follow.
+ */
+function resolveSolutionStyleReferences(configPath: string, depth = 0): string {
+  if (depth > 5) return configPath;
+
+  const raw = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (raw.error || !raw.config) return configPath;
+
+  const hasOwnOptions =
+    raw.config.compilerOptions && Object.keys(raw.config.compilerOptions).length > 0;
+  const references: unknown = raw.config.references;
+
+  if (hasOwnOptions || !Array.isArray(references) || references.length === 0) {
+    return configPath;
+  }
+
+  const firstRef = references[0] as { path?: string };
+  if (!firstRef?.path) return configPath;
+
+  const refTarget = path.resolve(path.dirname(configPath), firstRef.path);
+  const nextConfigPath = ts.sys.fileExists(refTarget)
+    ? refTarget
+    : path.join(refTarget, 'tsconfig.json');
+
+  if (!ts.sys.fileExists(nextConfigPath)) return configPath;
+
+  return resolveSolutionStyleReferences(nextConfigPath, depth + 1);
 }

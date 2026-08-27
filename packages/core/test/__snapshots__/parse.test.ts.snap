@@ -158,6 +158,39 @@ exports[`parse — basic interface (fixture 01) > extracts a plain Props interfa
 }
 `;
 
+exports[`parse — cross-file props type + intersection (fixture 21) > resolves a props type declared in a separate types.ts, not this file 1`] = `
+{
+  "description": undefined,
+  "displayName": "CardProps",
+  "props": {
+    "customClass": {
+      "description": "Custom HTML class for the element.",
+      "name": "customClass",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "internalDebugId": {
+      "description": "Used only by internal tooling; not part of the public API.",
+      "name": "internalDebugId",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "title": {
+      "description": "The card's title text.",
+      "name": "title",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
 exports[`parse — discriminated union of objects (fixture 06) > splits a union-of-objects prop into structured branches 1`] = `
 {
   "description": undefined,
