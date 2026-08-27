@@ -12,15 +12,24 @@ This is an npm workspaces monorepo:
 
 ```
 packages/
-  core/           TS/TSX file in, Documentation JSON out. No Storybook
-                   dependency — reusable anywhere.
-  vite-plugin/    Vite plugin that attaches __docgenInfo to each component
-                   (the same convention react-docgen-typescript uses), plus
-                   a Storybook argTypesEnhancer preset that makes Controls
-                   aware of the richer data core produces.
+  core/             TS/TSX file in, Documentation JSON out. No Storybook
+                     dependency — reusable anywhere.
+  vite-plugin/      Vite plugin that attaches __docgenInfo to each component
+                     (the same convention react-docgen-typescript uses), plus
+                     a Storybook argTypesEnhancer preset (builder-agnostic —
+                     works the same under webpack) that makes Controls aware
+                     of the richer data core produces.
+  webpack-loader/   Same job as vite-plugin's docgen plugin, for Storybook's
+                     webpack5 builder — a webpack loader instead of a Vite
+                     transform hook, since that builder doesn't go through
+                     Vite at all.
 examples/
-  storybook-sandbox/   A real Storybook app wired to the above via workspace
-                        linking — the manual/visual testing playground.
+  storybook-sandbox/           Storybook on the Vite builder, wired to
+                                 vite-plugin — the primary manual/visual
+                                 testing playground.
+  storybook-sandbox-webpack/   Storybook on the webpack5 builder, wired to
+                                 webpack-loader — proves the webpack
+                                 integration path independently.
 ```
 
 ## Setup
@@ -84,6 +93,24 @@ To produce a static build instead of a dev server:
 ```bash
 npx storybook build
 ```
+
+### Webpack builder instead of Vite
+
+`examples/storybook-sandbox-webpack` proves the same integration works under
+Storybook's webpack5 builder, via `@rdrp/webpack-loader` instead of
+`@rdrp/vite-plugin`'s docgen plugin — the `argTypesEnhancer` preset is
+unchanged between the two, since it's a preview annotation, not tied to
+either bundler.
+
+```bash
+cd examples/storybook-sandbox-webpack
+npx storybook dev -p 6007
+```
+
+Note: Storybook 8.6's webpack5 builder doesn't transform `.tsx` out of the
+box (its native fast-path TS handling only covers plain `.ts`), so this
+sandbox's `.storybook/main.ts` also registers `esbuild-loader` explicitly —
+see the comments there if wiring this into your own webpack-based project.
 
 ### How the sandbox is wired
 
