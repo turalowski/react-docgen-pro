@@ -22,7 +22,6 @@ const config: StorybookConfig = {
   webpackFinal: async (webpackConfig) => {
     webpackConfig.module ??= { rules: [] };
     webpackConfig.module.rules ??= [];
-
     // Our docgen loader runs first (enforce: 'pre'), appending plain JS
     // to the raw source. It reads the file straight off disk via
     // @rdrp/core rather than the in-flight webpack source, so it
