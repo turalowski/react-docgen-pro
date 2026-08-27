@@ -12,7 +12,7 @@
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
-    "@rdrp/vite-plugin": "*",
+    "react-docgen-pro": "file:../..",
     "@storybook/addon-essentials": "^8.4.0",
     "@storybook/react-vite": "^8.4.0",
     "storybook": "^8.4.0",

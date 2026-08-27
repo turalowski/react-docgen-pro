@@ -12,7 +12,7 @@
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
-    "@rdrp/webpack-loader": "*",
+    "react-docgen-pro": "file:../..",
     "@storybook/addon-essentials": "^8.4.0",
     "@storybook/react-webpack5": "^8.4.0",
     "esbuild-loader": "^4.2.0",
