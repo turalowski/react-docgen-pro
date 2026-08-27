@@ -1,5 +1,5 @@
 /**
- * Given a component's __docgenInfo (as produced by @rdrp/core + our
+ * Given a component's __docgenInfo (as produced by react-docgen-pro + our
  * vite plugin) and the discriminant value a particular story uses
  * (e.g. 'text'), returns a Storybook `argTypes` override that hides
  * every field belonging to *other* branches.

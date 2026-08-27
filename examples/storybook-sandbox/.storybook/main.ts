@@ -1,5 +1,5 @@
 import type { StorybookConfig } from '@storybook/react-vite';
-import { rdrpDocgenPlugin } from '@rdrp/vite-plugin';
+import { viteLoader } from 'react-docgen-pro/vite';
 
 const config: StorybookConfig = {
   framework: '@storybook/react-vite',
@@ -12,7 +12,7 @@ const config: StorybookConfig = {
     // Registers argTypesEnhancers globally — Controls automatically
     // hides fields from non-active union branches on every story,
     // no per-story wiring needed.
-    '@rdrp/vite-plugin/src/preset.js',
+    'react-docgen-pro/vite/preset',
   ],
   typescript: {
     // Turn off Storybook's built-in docgen entirely — we're supplying
@@ -22,7 +22,7 @@ const config: StorybookConfig = {
   },
   async viteFinal(viteConfig) {
     viteConfig.plugins ??= [];
-    viteConfig.plugins.push(rdrpDocgenPlugin());
+    viteConfig.plugins.push(viteLoader());
     return viteConfig;
   },
 };

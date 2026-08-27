@@ -1,9 +1,9 @@
-import { parse } from '@rdrp/core';
+import { parse } from 'react-docgen-pro';
 
 export { argTypesForVariant } from './argTypes.js';
 
 /**
- * Minimal Vite plugin: for each .tsx file, runs it through @rdrp/core's
+ * Minimal Vite plugin: for each .tsx file, runs it through react-docgen-pro's
  * parse() and appends `ComponentName.__docgenInfo = {...}` to the
  * transformed module — the same static-property convention Storybook's
  * addon-docs / ArgsTable already reads from
@@ -16,7 +16,7 @@ export { argTypesForVariant } from './argTypes.js';
  * end, but see findComponentNames' own comment for a real limitation
  * this has on files with multiple differently-scoped exports.
  */
-export function rdrpDocgenPlugin() {
+export function viteLoader() {
   return {
     name: 'rdrp-docgen',
     enforce: 'pre',

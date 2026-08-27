@@ -1,8 +1,8 @@
-import { parse } from '@rdrp/core';
+import { parse } from 'react-docgen-pro';
 
 /**
- * Webpack loader equivalent of vite-plugin's rdrpDocgenPlugin: same
- * job (parse the file via @rdrp/core, inject __docgenInfo onto the
+ * Webpack loader equivalent of the vite loader (src/vite/index.js): same
+ * job (parse the file via react-docgen-pro, inject __docgenInfo onto the
  * component so Storybook's addon-docs/Controls can read it), but
  * wired in via webpackFinal's module.rules instead of a Vite
  * transform hook, since Storybook's webpack5 builder doesn't go
@@ -16,11 +16,11 @@ import { parse } from '@rdrp/core';
  * thing, injected line included, without needing to know about us.
  *
  * findComponentNames below is intentionally duplicated from
- * vite-plugin/src/index.js rather than shared — same small
- * regex-based heuristic, kept in each loader's own package so neither
- * builder integration depends on the other.
+ * src/vite/index.js rather than shared — same small regex-based
+ * heuristic, kept next to each builder integration so neither depends
+ * on the other's internals.
  */
-export default function rdrpWebpackLoader(source) {
+export default function webpackLoader(source) {
   const filePath = this.resourcePath;
 
   if (!filePath.endsWith('.tsx') || filePath.includes('node_modules') || filePath.includes('.stories.')) {

@@ -1,18 +1,62 @@
 {
-  "name": "react-docgen-rich-parser-workspace",
-  "private": true,
-  "version": "0.0.0",
+  "name": "react-docgen-pro",
+  "version": "1.0.0",
+  "description": "TypeScript-aware React props parser: expands discriminated unions, unions of objects, and nested object props into structured data (via the TypeScript compiler API) instead of stringifying types like react-docgen-typescript does. Ships with a Vite plugin and a webpack loader for wiring the parsed docgen info into Storybook.",
+  "keywords": [
+    "react",
+    "docgen",
+    "react-docgen",
+    "typescript",
+    "storybook",
+    "props",
+    "documentation",
+    "vite-plugin",
+    "webpack-loader"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vite": "./src/vite/index.js",
+    "./vite/preset": "./src/vite/preset.js",
+    "./webpack": "./src/webpack/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src/vite",
+    "src/webpack",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "author": "Tural Hajiyev",
+  "homepage": "https://github.com/turalowski/react-docgen-rich-parser#readme",
+  "bugs": "https://github.com/turalowski/react-docgen-rich-parser/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/turalowski/react-docgen-rich-parser.git"
+  },
   "workspaces": [
-    "packages/*",
     "examples/*"
   ],
   "scripts": {
-    "test": "npm run test -w packages/core",
-    "test:watch": "npm run test:watch -w packages/core",
-    "build": "npm run build -w packages/core"
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "typescript": "^5.6.0"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "vitest": "^2.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0"
   },
   "allowScripts": {
     "esbuild@0.21.5": true,

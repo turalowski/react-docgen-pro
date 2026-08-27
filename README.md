@@ -1,4 +1,4 @@
-# react-docgen-rich-parser
+# react-docgen-pro
 
 A TypeScript-aware props parser for React components, built on the TypeScript
 compiler API. Unlike `react-docgen-typescript`, it doesn't stop at stringifying
@@ -6,140 +6,133 @@ a union type — it expands discriminated unions, unions of objects, and nested
 object props into structured data, so tooling like Storybook can render them
 properly instead of showing an opaque type string.
 
-## Project structure
-
-This is an npm workspaces monorepo:
-
-```
-packages/
-  core/             TS/TSX file in, Documentation JSON out. No Storybook
-                     dependency — reusable anywhere.
-  vite-plugin/      Vite plugin that attaches __docgenInfo to each component
-                     (the same convention react-docgen-typescript uses), plus
-                     a Storybook argTypesEnhancer preset (builder-agnostic —
-                     works the same under webpack) that makes Controls aware
-                     of the richer data core produces.
-  webpack-loader/   Same job as vite-plugin's docgen plugin, for Storybook's
-                     webpack5 builder — a webpack loader instead of a Vite
-                     transform hook, since that builder doesn't go through
-                     Vite at all.
-examples/
-  shared-components/           One component + story per interesting parsing
-                                 case (extends, unions, utility types, nested
-                                 interfaces, ...) — shared by both sandboxes
-                                 below, so there's a single set of fixtures
-                                 to keep in sync rather than two.
-  storybook-sandbox/           Storybook on the Vite builder, wired to
-                                 vite-plugin — the primary manual/visual
-                                 testing playground.
-  storybook-sandbox-webpack/   Storybook on the webpack5 builder, wired to
-                                 webpack-loader — proves the webpack
-                                 integration path independently.
+```bash
+npm install --save-dev react-docgen-pro
 ```
 
-## Setup
+## Quick start
 
-Requires Node 18+ (no `pnpm` needed — this uses plain npm workspaces).
+Most people use this through the Vite or webpack integration below to get
+Storybook's Controls panel working properly — jump to whichever builder you
+use. If you just want the parsed props as JSON, call `parse()` directly:
+
+```ts
+import { parse } from 'react-docgen-pro';
+
+const doc = parse('./src/Button.tsx');
+```
+
+`doc` looks like:
+
+```json
+{
+  "displayName": "Button",
+  "description": "A clickable button.",
+  "props": {
+    "label": { "name": "label", "required": true, "type": { "name": "string" }, "description": "Text shown on the button." },
+    "variant": { "name": "variant", "required": false, "type": { "name": "\"primary\" | \"secondary\"" }, "defaultValue": { "value": "\"primary\"" } }
+  }
+}
+```
+
+For a component whose `Props` type is a union of object shapes (a
+discriminated union), `doc.elements` additionally carries the full per-branch
+breakdown — every field from every branch, not just the flattened
+intersection — which is what the Storybook integration below uses to drive
+Controls.
+
+## Using it with Storybook + Vite
 
 ```bash
-npm install
+npm install --save-dev react-docgen-pro
 ```
 
-This installs dependencies for every workspace package and symlinks
-`@rdrp/core` / `@rdrp/vite-plugin` into `examples/storybook-sandbox` — any
-change to `core` is live in the sandbox after a rebuild, no publishing.
+In `.storybook/main.ts`:
 
-## Running the parser's tests
+```ts
+import type { StorybookConfig } from '@storybook/react-vite';
+import { viteLoader } from 'react-docgen-pro/vite';
+
+const config: StorybookConfig = {
+  framework: '@storybook/react-vite',
+  addons: [
+    '@storybook/addon-essentials',
+    // Registers a Storybook argTypesEnhancer that hides Controls fields
+    // from non-active union branches and fills in branch-specific
+    // descriptions — runs automatically for every story.
+    'react-docgen-pro/vite/preset',
+  ],
+  typescript: {
+    // Turn off Storybook's built-in docgen — react-docgen-pro supplies
+    // __docgenInfo itself via the plugin below.
+    reactDocgen: false,
+  },
+  async viteFinal(viteConfig) {
+    viteConfig.plugins ??= [];
+    viteConfig.plugins.push(viteLoader());
+    return viteConfig;
+  },
+};
+
+export default config;
+```
+
+## Using it with Storybook + webpack
 
 ```bash
-npm test
+npm install --save-dev react-docgen-pro
 ```
 
-Runs `packages/core`'s fixture-based snapshot suite (`packages/core/test/`).
-Each fixture under `test/fixtures/*.tsx` is a minimal, focused `.tsx` file
-exercising one parsing concern (basic interfaces, jsdoc, `extends`, unions,
-utility types like `Pick`/`Omit`/`Partial`, nested object props, ...) —
-`test/parse.test.ts` parses each one and snapshot-tests the result. When you
-change parsing behavior, run the tests and review the snapshot diff; if the
-new output is correct, update it with:
+In `.storybook/main.ts`:
 
-```bash
-cd packages/core && npx vitest run -u
+```ts
+import type { StorybookConfig } from '@storybook/react-webpack5';
+
+const config: StorybookConfig = {
+  framework: '@storybook/react-webpack5',
+  addons: [
+    '@storybook/addon-essentials',
+    // Same preset used by the Vite setup — it's builder-agnostic.
+    'react-docgen-pro/vite/preset',
+  ],
+  typescript: {
+    reactDocgen: false,
+  },
+  webpackFinal: async (webpackConfig) => {
+    webpackConfig.module ??= { rules: [] };
+    webpackConfig.module.rules ??= [];
+    webpackConfig.module.rules.push({
+      test: /\.tsx$/,
+      exclude: /node_modules/,
+      enforce: 'pre',
+      use: [{ loader: 'react-docgen-pro/webpack' }],
+    });
+    return webpackConfig;
+  },
+};
+
+export default config;
 ```
 
-## Inspecting parser output directly
+Either way, once wired in, every exported component in a `.tsx` file gets a
+`Component.__docgenInfo` static property attached at build time — the same
+convention `react-docgen-typescript`-based tooling already reads — so
+Storybook's addon-docs and Controls panel pick it up with no other changes.
 
-To see the actual JSON `parse()` produces for any file, without going
-through Storybook:
+### What you get in Controls that plain react-docgen-typescript doesn't give you
 
-```bash
-cd packages/core
-npm run build
-node scripts/inspect.mjs test/fixtures/01-basic-interface.tsx
-# or point it at any other .tsx file, e.g. one in the sandbox:
-node scripts/inspect.mjs ../../examples/shared-components/Avatar.tsx
-```
+For a `Props` type that's a discriminated union (e.g. a `Button` whose props
+differ by `variant: 'link' | 'icon'`), plain react-docgen-typescript only
+shows the fields common to every variant. With the preset registered:
 
-## Running the Storybook sandbox
+- Controls hides fields that belong to a different branch than the one the
+  current story's args select
+- each visible field keeps its branch-specific jsdoc description
+- a prop typed as a nested interface or a union of object shapes shows its
+  real field-by-field shape in the Type column's detail popover, instead of
+  just the bare type name
 
-```bash
-cd examples/storybook-sandbox
-npx storybook dev -p 6006
-```
-
-Open http://localhost:6006. The sandbox has one component per interesting
-parsing case — extends, multi-level extends, discriminated unions, nested
-interfaces, TS utility types — each with its own story, so you can see the
-parsed props actually rendered in Storybook's Controls panel rather than as
-raw JSON.
-
-To produce a static build instead of a dev server:
-
-```bash
-npx storybook build
-```
-
-### Webpack builder instead of Vite
-
-`examples/storybook-sandbox-webpack` proves the same integration works under
-Storybook's webpack5 builder, via `@rdrp/webpack-loader` instead of
-`@rdrp/vite-plugin`'s docgen plugin — the `argTypesEnhancer` preset is
-unchanged between the two, since it's a preview annotation, not tied to
-either bundler.
-
-```bash
-cd examples/storybook-sandbox-webpack
-npx storybook dev -p 6007
-```
-
-Note: Storybook 8.6's webpack5 builder doesn't transform `.tsx` out of the
-box (its native fast-path TS handling only covers plain `.ts`), so this
-sandbox's `.storybook/main.ts` also registers `esbuild-loader` explicitly —
-see the comments there if wiring this into your own webpack-based project.
-
-### How the sandbox is wired
-
-`examples/storybook-sandbox/.storybook/main.ts` registers `@rdrp/vite-plugin`
-two ways:
-
-- via `viteFinal`, adding `rdrpDocgenPlugin()` — this is what attaches
-  `Component.__docgenInfo` to every `.tsx` module at build time, the actual
-  integration seam for Storybook's Vite builder (not the `typescript.
-  reactDocgen` option in `main.ts`, which only toggles Storybook's *built-in*
-  docgen choices and is turned off here).
-- via `addons`, pointing at `@rdrp/vite-plugin/src/preset.js` — this
-  registers a Storybook `argTypesEnhancer` that runs automatically for every
-  story, so nothing needs to be imported or called per-story-file. It:
-  - hides Controls fields that belong to a union branch other than the one
-    the current story's args select (keyed off the branch discriminant)
-  - fills in each visible field's branch-specific jsdoc description, where
-    core's flattened view had to drop an ambiguous one
-  - for a prop with a nested or union object shape, shows the original type
-    name(s) as the clickable Type-column text, with the full expanded shape
-    (recursively, for nested-interface-inside-interface cases) in the detail
-    popover
-
-## What core currently handles
+## What it handles
 
 - Plain interfaces/type aliases, required vs. optional props, jsdoc
   descriptions (component-level and per-prop), `@default` tags
@@ -154,3 +147,10 @@ two ways:
 
 Not yet handled: cross-file `extends` (importing a base interface from
 another module), intersections (`A & B`), and generic components.
+
+## Contributing / local development
+
+See [examples/](examples/) for runnable Storybook sandboxes (Vite and
+webpack builders) and [RELEASING.md](RELEASING.md) for how the package is
+versioned and published. `npm test` runs the parser's fixture-based
+snapshot suite.
