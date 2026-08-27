@@ -353,3 +353,29 @@ describe('parse — nested object prop, two levels deep (fixture 15)', () => {
     expect(root.child.type.properties).toBeUndefined();
   });
 });
+
+describe('parse — component signature resolution (fixtures 16-19)', () => {
+  it('resolves the props type from destructured parameters, not the wrong same-file *Props', () => {
+    const result = parse(fixture('16-destructured-props.tsx'));
+    expect(result.displayName).toBe('Props');
+    expect(Object.keys(result.props).sort()).toEqual(['label', 'onClick']);
+  });
+
+  it('resolves the props type from React.FC<Props> on the variable, not the parameter', () => {
+    const result = parse(fixture('17-react-fc.tsx'));
+    expect(result.displayName).toBe('Props');
+    expect(Object.keys(result.props)).toEqual(['label']);
+  });
+
+  it('resolves the props type from forwardRef<Ref, Props>\'s second type argument', () => {
+    const result = parse(fixture('18-forward-ref.tsx'));
+    expect(result.displayName).toBe('Props');
+    expect(Object.keys(result.props)).toEqual(['label']);
+  });
+
+  it('resolves the props type through a memo(...) wrapper', () => {
+    const result = parse(fixture('19-memo.tsx'));
+    expect(result.displayName).toBe('Props');
+    expect(Object.keys(result.props)).toEqual(['label']);
+  });
+});
