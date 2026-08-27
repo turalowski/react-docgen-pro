@@ -24,6 +24,11 @@ packages/
                      transform hook, since that builder doesn't go through
                      Vite at all.
 examples/
+  shared-components/           One component + story per interesting parsing
+                                 case (extends, unions, utility types, nested
+                                 interfaces, ...) — shared by both sandboxes
+                                 below, so there's a single set of fixtures
+                                 to keep in sync rather than two.
   storybook-sandbox/           Storybook on the Vite builder, wired to
                                  vite-plugin — the primary manual/visual
                                  testing playground.
@@ -72,7 +77,7 @@ cd packages/core
 npm run build
 node scripts/inspect.mjs test/fixtures/01-basic-interface.tsx
 # or point it at any other .tsx file, e.g. one in the sandbox:
-node scripts/inspect.mjs ../../examples/storybook-sandbox/src/components/Avatar.tsx
+node scripts/inspect.mjs ../../examples/shared-components/Avatar.tsx
 ```
 
 ## Running the Storybook sandbox

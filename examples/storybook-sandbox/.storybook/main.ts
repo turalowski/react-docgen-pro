@@ -3,7 +3,10 @@ import { rdrpDocgenPlugin } from '@rdrp/vite-plugin';
 
 const config: StorybookConfig = {
   framework: '@storybook/react-vite',
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  // Components live in examples/shared-components/, shared with the
+  // webpack sandbox, so both prove the same fixtures rather than
+  // maintaining two copies.
+  stories: ['../../shared-components/**/*.stories.@(ts|tsx)'],
   addons: [
     '@storybook/addon-essentials',
     // Registers argTypesEnhancers globally — Controls automatically

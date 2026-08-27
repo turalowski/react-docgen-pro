@@ -2,7 +2,10 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 
 const config: StorybookConfig = {
   framework: '@storybook/react-webpack5',
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  // Components live in examples/shared-components/, shared with the
+  // Vite sandbox, so both prove the same fixtures rather than
+  // maintaining two copies.
+  stories: ['../../shared-components/**/*.stories.@(ts|tsx)'],
   addons: [
     '@storybook/addon-essentials',
     // Registers argTypesEnhancers globally — the same preset used by
