@@ -1,0 +1,658 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parse — Omit<T, K> (fixture 10) > excludes the omitted keys, keeping the rest with their jsdoc 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "id": {
+      "description": "Unique user id.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "name": {
+      "description": "Full display name.",
+      "name": "name",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — Partial<T> (fixture 11) > marks every prop optional and strips the implicit undefined from the type 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "id": {
+      "description": "Unique user id.",
+      "name": "id",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "name": {
+      "description": "Full display name.",
+      "name": "name",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — Pick<T, K> (fixture 09) > includes only the picked keys, each keeping its own jsdoc 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "id": {
+      "description": "Unique user id.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "name": {
+      "description": "Full display name.",
+      "name": "name",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — Record<K, V> (fixture 13) > produces one required prop per key of the union, all sharing the value type 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "large": {
+      "description": undefined,
+      "name": "large",
+      "required": true,
+      "type": {
+        "name": "number",
+      },
+    },
+    "medium": {
+      "description": undefined,
+      "name": "medium",
+      "required": true,
+      "type": {
+        "name": "number",
+      },
+    },
+    "small": {
+      "description": undefined,
+      "name": "small",
+      "required": true,
+      "type": {
+        "name": "number",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — Required<T> (fixture 12) > marks every prop required, even one that was optional in the source interface 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "id": {
+      "description": "Unique user id.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "name": {
+      "description": "Full display name.",
+      "name": "name",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — basic interface (fixture 01) > extracts a plain Props interface 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "count": {
+      "description": "Number of times to greet",
+      "name": "count",
+      "required": false,
+      "type": {
+        "name": "number",
+      },
+    },
+    "name": {
+      "description": "The user's display name",
+      "name": "name",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — discriminated union of objects (fixture 06) > splits a union-of-objects prop into structured branches 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "action": {
+      "description": "Either navigates somewhere or runs a handler, never both.",
+      "name": "action",
+      "required": true,
+      "type": {
+        "elements": [
+          {
+            "discriminant": {
+              "name": "type",
+              "value": ""link"",
+            },
+            "props": {
+              "href": {
+                "description": "Destination URL.",
+                "name": "href",
+                "required": true,
+                "type": {
+                  "name": "string",
+                },
+              },
+              "type": {
+                "description": "Discriminant: this branch navigates to a URL.",
+                "name": "type",
+                "required": true,
+                "type": {
+                  "name": ""link"",
+                },
+              },
+            },
+          },
+          {
+            "discriminant": {
+              "name": "type",
+              "value": ""button"",
+            },
+            "props": {
+              "onClick": {
+                "description": "Called when the action is triggered.",
+                "name": "onClick",
+                "required": true,
+                "type": {
+                  "name": "() => void",
+                },
+              },
+              "type": {
+                "description": "Discriminant: this branch runs a click handler instead of navigating.",
+                "name": "type",
+                "required": true,
+                "type": {
+                  "name": ""button"",
+                },
+              },
+            },
+          },
+        ],
+        "name": "LinkAction | ButtonAction",
+      },
+    },
+    "label": {
+      "description": undefined,
+      "name": "label",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — extended interface (fixture 03) > includes both own and inherited props 1`] = `
+{
+  "description": "A card that displays a title and optional footer.",
+  "displayName": "Props",
+  "props": {
+    "className": {
+      "description": "Extra class names to apply.",
+      "name": "className",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "footer": {
+      "description": "Rendered below the title.",
+      "name": "footer",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "id": {
+      "description": "Unique identifier for the element.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "title": {
+      "description": undefined,
+      "name": "title",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — jsdoc comments (fixture 02) > extracts interface-level and per-prop descriptions plus @default 1`] = `
+{
+  "description": "A button that triggers an action.
+
+Supports primary and secondary visual styles.",
+  "displayName": "Props",
+  "props": {
+    "disabled": {
+      "description": "Disables the button and prevents interaction.",
+      "name": "disabled",
+      "required": false,
+      "type": {
+        "name": "boolean",
+      },
+    },
+    "label": {
+      "description": undefined,
+      "name": "label",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "variant": {
+      "defaultValue": {
+        "value": "'secondary'",
+      },
+      "description": "Visual style of the button.
+Use "primary" for the main call to action on a page.",
+      "name": "variant",
+      "required": false,
+      "type": {
+        "name": ""primary" | "secondary"",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — multi-level extends (fixture 04) > flattens a three-level extends chain into one prop set 1`] = `
+{
+  "description": "Sits at the bottom of a three-level extends chain: Props -> BProps -> AProps.",
+  "displayName": "Props",
+  "props": {
+    "id": {
+      "description": "From the root of the chain.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "label": {
+      "description": "Middle of the chain.",
+      "name": "label",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "onClick": {
+      "description": "Own prop, not inherited.",
+      "name": "onClick",
+      "required": false,
+      "type": {
+        "name": "() => void",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — nested object prop (fixture 14) > keeps the reference type name and adds an expanded shape alongside it 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "size": {
+      "description": "Diameter in pixels.",
+      "name": "size",
+      "required": false,
+      "type": {
+        "name": "number",
+      },
+    },
+    "user": {
+      "description": "The person to render — a nested object, not a flat prop.",
+      "name": "user",
+      "required": true,
+      "type": {
+        "name": "AvatarUser",
+        "properties": {
+          "name": {
+            "description": "Full display name.",
+            "name": "name",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+          "photoUrl": {
+            "description": "URL of the profile photo; falls back to initials when absent.",
+            "name": "photoUrl",
+            "required": false,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — nested object prop, two levels deep (fixture 15) > expands an interface-inside-an-interface, not just the outer level 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "root": {
+      "description": undefined,
+      "name": "root",
+      "required": true,
+      "type": {
+        "name": "TreeNode",
+        "properties": {
+          "child": {
+            "description": "Child nodes, same shape as this one.",
+            "name": "child",
+            "required": false,
+            "type": {
+              "name": "TreeNode",
+            },
+          },
+          "label": {
+            "description": undefined,
+            "name": "label",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+    "user": {
+      "description": undefined,
+      "name": "user",
+      "required": true,
+      "type": {
+        "name": "AvatarUser",
+        "properties": {
+          "employer": {
+            "description": "The user's employer — an interface nested inside an interface.",
+            "name": "employer",
+            "required": true,
+            "type": {
+              "name": "Employer",
+              "properties": {
+                "company": {
+                  "description": "Company name.",
+                  "name": "company",
+                  "required": true,
+                  "type": {
+                    "name": "string",
+                  },
+                },
+              },
+            },
+          },
+          "name": {
+            "description": "Full display name.",
+            "name": "name",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — non-discriminated union of objects (fixture 07) > still splits into branches when there is no shared tag field 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "lookup": {
+      "description": "Identifies the user, one way or the other — no shared tag field.",
+      "name": "lookup",
+      "required": true,
+      "type": {
+        "elements": [
+          {
+            "props": {
+              "email": {
+                "description": "Look the user up by email address.",
+                "name": "email",
+                "required": true,
+                "type": {
+                  "name": "string",
+                },
+              },
+            },
+          },
+          {
+            "props": {
+              "id": {
+                "description": "Look the user up by numeric id.",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "name": "number",
+                },
+              },
+            },
+          },
+        ],
+        "name": "ByEmail | ById",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — top-level union Props type (fixture 08) > resolves the union type alias, not an unrelated same-file *Props interface 1`] = `
+{
+  "description": "Props for the Input family of components — the concrete shape
+depends on \`type\`.",
+  "displayName": "InputProps",
+  "elements": [
+    {
+      "discriminant": {
+        "name": "type",
+        "value": ""text"",
+      },
+      "props": {
+        "placeholder": {
+          "description": "Placeholder shown when value is empty.",
+          "name": "placeholder",
+          "required": false,
+          "type": {
+            "name": "string",
+          },
+        },
+        "type": {
+          "description": "Discriminant identifying this as a plain text input.",
+          "name": "type",
+          "required": true,
+          "type": {
+            "name": ""text"",
+          },
+        },
+        "value": {
+          "description": "The current text value.",
+          "name": "value",
+          "required": true,
+          "type": {
+            "name": "string",
+          },
+        },
+      },
+    },
+    {
+      "discriminant": {
+        "name": "type",
+        "value": ""checkboxGroup"",
+      },
+      "props": {
+        "options": {
+          "description": "All selectable options for the group.",
+          "name": "options",
+          "required": true,
+          "type": {
+            "name": "string[]",
+          },
+        },
+        "type": {
+          "description": "Discriminant identifying this as a checkbox group.",
+          "name": "type",
+          "required": true,
+          "type": {
+            "name": ""checkboxGroup"",
+          },
+        },
+        "values": {
+          "description": "The currently checked option values.",
+          "name": "values",
+          "required": true,
+          "type": {
+            "name": "string[]",
+          },
+        },
+      },
+    },
+  ],
+  "props": {
+    "options": {
+      "defaultValue": undefined,
+      "description": "All selectable options for the group.",
+      "name": "options",
+      "required": false,
+      "type": {
+        "name": "string[]",
+      },
+    },
+    "placeholder": {
+      "defaultValue": undefined,
+      "description": "Placeholder shown when value is empty.",
+      "name": "placeholder",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "type": {
+      "defaultValue": undefined,
+      "description": undefined,
+      "name": "type",
+      "required": true,
+      "type": {
+        "name": ""text" | "checkboxGroup"",
+      },
+    },
+    "value": {
+      "defaultValue": undefined,
+      "description": "The current text value.",
+      "name": "value",
+      "required": false,
+      "type": {
+        "name": "string",
+      },
+    },
+    "values": {
+      "defaultValue": undefined,
+      "description": "The currently checked option values.",
+      "name": "values",
+      "required": false,
+      "type": {
+        "name": "string[]",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — union of primitives (fixture 05) > renders a string literal union as a pipe-joined type name 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "label": {
+      "description": "Either an explicit string or nothing at all.",
+      "name": "label",
+      "required": true,
+      "type": {
+        "name": "string | null",
+      },
+    },
+    "size": {
+      "description": "A size in one of a few fixed steps.",
+      "name": "size",
+      "required": false,
+      "type": {
+        "name": "1 | 2 | 3",
+      },
+    },
+    "status": {
+      "description": "Current lifecycle status.",
+      "name": "status",
+      "required": true,
+      "type": {
+        "name": ""idle" | "loading" | "error"",
+      },
+    },
+  },
+}
+`;

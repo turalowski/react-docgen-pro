@@ -1,0 +1,21 @@
+{
+  "name": "react-docgen-rich-parser-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "test": "npm run test -w packages/core",
+    "test:watch": "npm run test:watch -w packages/core",
+    "build": "npm run build -w packages/core"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "fsevents@2.3.3": true
+  }
+}
