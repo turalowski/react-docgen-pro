@@ -503,6 +503,31 @@ exports[`parse — non-discriminated union of objects (fixture 07) > still split
 }
 `;
 
+exports[`parse — respects the consuming project's tsconfig.json (fixture 20) > resolves a path-aliased cross-file extends via baseUrl/paths from the real tsconfig 1`] = `
+{
+  "description": undefined,
+  "displayName": "CardProps",
+  "props": {
+    "id": {
+      "description": "Unique identifier, defined in a path-aliased base module.",
+      "name": "id",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+    "title": {
+      "description": undefined,
+      "name": "title",
+      "required": true,
+      "type": {
+        "name": "string",
+      },
+    },
+  },
+}
+`;
+
 exports[`parse — top-level union Props type (fixture 08) > resolves the union type alias, not an unrelated same-file *Props interface 1`] = `
 {
   "description": "Props for the Input family of components — the concrete shape

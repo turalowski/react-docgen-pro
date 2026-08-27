@@ -379,3 +379,19 @@ describe('parse — component signature resolution (fixtures 16-19)', () => {
     expect(Object.keys(result.props)).toEqual(['label']);
   });
 });
+
+describe('parse — respects the consuming project\'s tsconfig.json (fixture 20)', () => {
+  it('resolves a path-aliased cross-file extends via baseUrl/paths from the real tsconfig', () => {
+    const result = parse(fixture('20-tsconfig-project/src/components/Card.tsx'));
+    expect(result).toMatchSnapshot();
+    // Without reading the project's own tsconfig (baseUrl + paths for
+    // "@base/*"), the import of BaseProps can't resolve at all, and
+    // "id" silently disappears from the flattened extends chain —
+    // confirmed by running the old hardcoded-options approach against
+    // this same fixture, which reports only ["title"].
+    expect(Object.keys(result.props).sort()).toEqual(['id', 'title']);
+    expect(result.props.id.description).toBe(
+      'Unique identifier, defined in a path-aliased base module.'
+    );
+  });
+});
