@@ -132,21 +132,54 @@ shows the fields common to every variant. With the preset registered:
   real field-by-field shape in the Type column's detail popover, instead of
   just the bare type name
 
-## What it handles
+## Roadmap: supported prop shapes
 
-- Plain interfaces/type aliases, required vs. optional props, jsdoc
+From simplest to most complex. Each fixture in [test/fixtures](test/fixtures)
+is a real example of the row it's next to.
+
+### Fully supported
+
+- Plain interfaces/type aliases — required vs. optional props, jsdoc
   descriptions (component-level and per-prop), `@default` tags
-- `extends`, including multi-level chains, in a single file
+- `extends`, including multi-level chains, and across files (importing a
+  base interface from another module)
+- Intersections (`A & B`) — merges props from every constituent, including
+  one that itself resolves via a cross-file `extends`; picks a clean
+  display name (the `*Props`-named constituent) instead of the full
+  intersection string
 - Unions of primitives (`'a' | 'b' | 'c'`)
 - Unions of objects, both as a single prop's type and as the whole `Props`
   type — split into branches with each branch's own props and jsdoc, plus a
   detected discriminant when one exists
-- `Pick`, `Omit`, `Partial`, `Required`, `Record`
+- Type helpers: `Pick`, `Omit`, `Partial`, `Required`, `Record`
 - Nested object props (a prop typed as another named interface), expanded up
   to 2 levels deep, with a cycle guard for self-referential types
+- Components written as a function declaration, `React.FC`, `forwardRef`, or
+  wrapped in `memo` — plus destructured-props signatures and arbitrary
+  project-specific HOC wrappers, so long as the props type appears as a type
+  argument or parameter annotation somewhere in the wrapper call
+  (`SomeWrapper<XProps>(Component, ...)`)
+- Multi-project setups via `tsconfig.json` path resolution
 
-Not yet handled: cross-file `extends` (importing a base interface from
-another module), intersections (`A & B`), and generic components.
+### Partially supported
+
+- Nested object props deeper than 2 levels — stops expanding past the
+  2-level limit and falls back to the bare type name, rather than erroring
+- Non-discriminated unions of objects — branches are still split out, but
+  without a detected discriminant field to drive Storybook Controls
+  automatically
+
+### Not yet supported
+
+- Generic components (`function List<T>(props: ListProps<T>)`) — the type
+  parameter isn't resolved against a concrete type, so the emitted shape is
+  imprecise
+- Mapped types (`{ [K in Keys]: ... }`) beyond the built-in `Partial`/
+  `Required`/`Record`/`Pick`/`Omit` helpers
+- Function-typed props (event handlers, render props) are recorded by their
+  signature string only — no structured breakdown of parameter/return types
+- Enums (`enum Variant { ... }`) as a prop's type — resolved to their
+  underlying primitive rather than the individual member names
 
 ## Contributing / local development
 
