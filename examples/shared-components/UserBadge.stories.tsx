@@ -2,13 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { UserBadge } from './UserBadge';
 
 const meta: Meta<typeof UserBadge> = {
-  title: 'Utility Types/UserBadge (Pick)',
+  title: 'Fully Supported/Utility Type - Pick',
   component: UserBadge,
 };
 export default meta;
 
 type Story = StoryObj<typeof UserBadge>;
 
-export const Default: Story = {
+export const PickedFields: Story = {
   args: { id: 'u_1', name: 'Ada Lovelace' },
 };

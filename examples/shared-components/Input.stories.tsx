@@ -2,17 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Input } from './Input';
 
 const meta: Meta<typeof Input> = {
-  title: 'Input',
+  title: 'Fully Supported/Discriminated Union (top-level Props)',
   component: Input,
 };
 export default meta;
 
 type Story = StoryObj<typeof Input>;
 
-export const Text: Story = {
+export const TextBranch: Story = {
   args: { type: 'text', value: '', placeholder: 'Type here…' },
 };
 
-export const CheckboxGroup: Story = {
+export const CheckboxGroupBranch: Story = {
   args: { type: 'checkboxGroup', values: ['a'], options: ['a', 'b', 'c'] },
 };
