@@ -38,11 +38,11 @@
   ],
   "license": "MIT",
   "author": "Tural Hajiyev",
-  "homepage": "https://github.com/turalowski/react-docgen-rich-parser#readme",
-  "bugs": "https://github.com/turalowski/react-docgen-rich-parser/issues",
+  "homepage": "https://github.com/turalowski/react-docgen-pro#readme",
+  "bugs": "https://github.com/turalowski/react-docgen-pro/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/turalowski/react-docgen-rich-parser.git"
+    "url": "https://github.com/turalowski/react-docgen-pro.git"
   },
   "workspaces": [
     "examples"
