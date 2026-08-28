@@ -45,7 +45,7 @@
     "url": "https://github.com/turalowski/react-docgen-rich-parser.git"
   },
   "workspaces": [
-    "examples/*"
+    "examples"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
