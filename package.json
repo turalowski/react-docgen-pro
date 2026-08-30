@@ -1,6 +1,6 @@
 {
   "name": "react-docgen-pro",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "TypeScript-aware React props parser: expands discriminated unions, unions of objects, and nested object props into structured data (via the TypeScript compiler API) instead of stringifying types like react-docgen-typescript does. Ships with a Vite plugin and a webpack loader for wiring the parsed docgen info into Storybook.",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
