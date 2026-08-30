@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { FeatureFlags } from './FeatureFlags';
 
 const meta: Meta<typeof FeatureFlags> = {
-  title: 'Not Yet Supported/Mapped Types',
+  title: 'Parser/Advanced Utility Types/Mapped Types',
   component: FeatureFlags,
 };
 export default meta;

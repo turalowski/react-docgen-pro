@@ -55,7 +55,10 @@ const config: StorybookConfig = {
   },
   async viteFinal(viteConfig) {
     viteConfig.plugins ??= [];
-    viteConfig.plugins.push(viteLoader());
+    // Pass options to viteLoader() to configure parsing, e.g. raise
+    // (or Infinity to disable) the 50-char default cap on rendered
+    // type-name strings like `Pick<Foo, "a" | "b" | ...>`.
+    viteConfig.plugins.push(viteLoader({ maxTypeNameLength: 80 }));
     return viteConfig;
   },
 };
@@ -91,7 +94,9 @@ const config: StorybookConfig = {
       test: /\.tsx$/,
       exclude: /node_modules/,
       enforce: 'pre',
-      use: [{ loader: 'react-docgen-pro/webpack' }],
+      // `options` here is react-docgen-pro's own ParseOptions, forwarded
+      // to every parse() call — same fields as the Vite loader above.
+      use: [{ loader: 'react-docgen-pro/webpack', options: { maxTypeNameLength: 80 } }],
     });
     return webpackConfig;
   },
@@ -105,21 +110,35 @@ Either way, once wired in, every exported component in a `.tsx` file gets a
 convention `react-docgen-typescript`-based tooling already reads — so
 Storybook's addon-docs and Controls panel pick it up with no other changes.
 
+## Configuration
+
+Both `viteLoader(options)` and the webpack loader's rule `options` take the
+same `ParseOptions` object accepted by `parse()` directly:
+
+| Option              | Default | What it does                                                                                     |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `maxTypeNameLength`  | `50`    | Caps a rendered type-name string (a prop's type, a union branch, a fallback displayName) at N characters, truncating with `…`. Set to `Infinity` to disable. |
+| `maxDepth`           | `2`     | How many levels of nested object props get expanded into `type.properties`.                         |
+
+```ts
+import { parse } from 'react-docgen-pro';
+
+const doc = parse('./Button.tsx', { maxTypeNameLength: 80 });
+```
 
 ## Roadmap: supported prop shapes
 
 From simplest to most complex. Each fixture in [test/fixtures](test/fixtures)
 is a real example of the row it's next to.
 
-- [ ] Plain interfaces with simple props
+- [ ] Plain interfaces with required and optional properties (also `default` tag) 
 - [ ] Plain interfaces with nested interfaces
 - [ ] Plain interfaces where props using named interfaces
-- [ ] Plain interfaces with required and optional props (also `@default` tag)
+- [ ] Union interfaces (`'A' | 'B' | 'C'`)
 - [ ] Intersections  (`A & B`) and `extends` keyword
 - [ ] Unions of primitives (`'a' | 'b' | 'c'`)
 - [ ] Utility types - `Pick`, `Omit`, `Partial`, `Required`
 - [ ] Components written as a function declaration, `React.FC`, `forwardRef` or wrapped in `memo` 
-- [ ] X
 - [ ] Generic components (`function List<T>(props: ListProps<T>)`)
 - Mapped types (`{ [K in Keys]: ... }`) beyond the built-in `Partial`/
   `Required`/`Record`/`Pick`/`Omit` helpers

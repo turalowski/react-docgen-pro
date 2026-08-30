@@ -15,8 +15,11 @@ export { argTypesForVariant } from './argTypes.js';
  * rather than a real AST walk — good enough to prove the wiring end to
  * end, but see findComponentNames' own comment for a real limitation
  * this has on files with multiple differently-scoped exports.
+ *
+ * @param {import('react-docgen-pro').ParseOptions} [options] Forwarded
+ * as-is to every `parse()` call — e.g. `viteLoader({ maxTypeNameLength: 80 })`.
  */
-export function viteLoader() {
+export function viteLoader(options) {
   return {
     name: 'rdrp-docgen',
     enforce: 'pre',
@@ -40,7 +43,7 @@ export function viteLoader() {
 
       let documentation;
       try {
-        documentation = parse(id);
+        documentation = parse(id, options);
       } catch {
         // No Props type in this file (e.g. not a component file) — skip silently.
         return null;

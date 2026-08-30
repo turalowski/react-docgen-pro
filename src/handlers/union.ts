@@ -5,6 +5,8 @@ import type { UnionBranch } from '../types.js';
 // module-evaluation time — only inside function bodies, by which
 // point both modules have finished initializing.
 import { extractPropertiesFromType } from '../extractProperties.js';
+import { DEFAULT_PARSE_OPTIONS, type ResolvedParseOptions } from '../options.js';
+import { truncateTypeName } from '../utils/truncateTypeName.js';
 
 /**
  * Detects a "union of objects" prop type (e.g.
@@ -20,7 +22,8 @@ import { extractPropertiesFromType } from '../extractProperties.js';
 export function resolveUnionBranches(
   type: ts.Type,
   contextNode: ts.Node,
-  checker: ts.TypeChecker
+  checker: ts.TypeChecker,
+  options: ResolvedParseOptions = DEFAULT_PARSE_OPTIONS
 ): UnionBranch[] | undefined {
   if (!type.isUnion()) return undefined;
 
@@ -33,9 +36,15 @@ export function resolveUnionBranches(
   const discriminantName = findDiscriminant(branches, checker);
 
   return branches.map((branchType) => {
-    const branchProps = extractPropertiesFromType(branchType, contextNode, checker);
+    const branchProps = extractPropertiesFromType(branchType, contextNode, checker, 0, options);
     const discriminant = discriminantName
-      ? { name: discriminantName, value: literalPropValue(branchType, discriminantName, checker) }
+      ? {
+          name: discriminantName,
+          value: truncateTypeName(
+            literalPropValue(branchType, discriminantName, checker),
+            options.maxTypeNameLength
+          ),
+        }
       : undefined;
 
     return {

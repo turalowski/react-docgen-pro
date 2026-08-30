@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Card } from './Card';
 
 const meta: Meta<typeof Card> = {
-  title: 'Fully Supported/Interface Extends',
+  title: 'Parser/Object Types/Interface Extends',
   component: Card,
 };
 export default meta;

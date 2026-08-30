@@ -1,4 +1,6 @@
 import ts from 'typescript';
+import { DEFAULT_PARSE_OPTIONS, type ResolvedParseOptions } from './options.js';
+import { truncateTypeName } from './utils/truncateTypeName.js';
 
 export interface ResolvedPropsType {
   type: ts.Type;
@@ -52,9 +54,10 @@ export interface ResolvedPropsType {
  */
 export function resolvePropsType(
   sourceFile: ts.SourceFile,
-  checker: ts.TypeChecker
+  checker: ts.TypeChecker,
+  options: ResolvedParseOptions = DEFAULT_PARSE_OPTIONS
 ): ResolvedPropsType | undefined {
-  const fromSignature = findPropsTypeFromComponentSignature(sourceFile, checker);
+  const fromSignature = findPropsTypeFromComponentSignature(sourceFile, checker, options);
   if (fromSignature) return fromSignature;
 
   let fallback: ts.InterfaceDeclaration | ts.TypeAliasDeclaration | undefined;
@@ -75,7 +78,8 @@ export function resolvePropsType(
 
 function findPropsTypeFromComponentSignature(
   sourceFile: ts.SourceFile,
-  checker: ts.TypeChecker
+  checker: ts.TypeChecker,
+  options: ResolvedParseOptions
 ): ResolvedPropsType | undefined {
   let found: ResolvedPropsType | undefined;
 
@@ -97,7 +101,12 @@ function findPropsTypeFromComponentSignature(
         )
       : (type.aliasSymbol ?? type.symbol);
 
-    found = { type, contextNode, displayName: typeDisplayName(typeNode, type, checker), docSymbol };
+    found = {
+      type,
+      contextNode,
+      displayName: typeDisplayName(typeNode, type, checker, options),
+      docSymbol,
+    };
   };
 
   const checkParams = (params: ts.NodeArray<ts.ParameterDeclaration>) => {
@@ -181,7 +190,12 @@ function findPropsTypeFromComponentSignature(
   return found;
 }
 
-function typeDisplayName(typeNode: ts.TypeNode, type: ts.Type, checker: ts.TypeChecker): string {
+function typeDisplayName(
+  typeNode: ts.TypeNode,
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  options: ResolvedParseOptions
+): string {
   if (ts.isTypeReferenceNode(typeNode)) {
     return rightmostName(typeNode.typeName);
   }
@@ -204,7 +218,11 @@ function typeDisplayName(typeNode: ts.TypeNode, type: ts.Type, checker: ts.TypeC
   // Union/inline object literal/anything else — no single clean
   // reference name on the node itself; fall back to whatever symbol
   // the checker resolved, or the stringified type as a last resort.
-  return type.symbol?.name ?? type.aliasSymbol?.name ?? checker.typeToString(type);
+  return (
+    type.symbol?.name ??
+    type.aliasSymbol?.name ??
+    truncateTypeName(checker.typeToString(type), options.maxTypeNameLength)
+  );
 }
 
 function isExported(decl: ts.VariableDeclaration): boolean {

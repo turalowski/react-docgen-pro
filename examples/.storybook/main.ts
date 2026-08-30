@@ -27,49 +27,61 @@ const config: StorybookConfig = {
   },
   ...(useWebpack
     ? ({
-        webpackFinal: async (webpackConfig) => {
-          webpackConfig.module ??= { rules: [] };
-          webpackConfig.module.rules ??= [];
-          // Our docgen loader runs first (enforce: 'pre'), appending
-          // plain JS to the raw source. It reads the file straight off
-          // disk via react-docgen-pro rather than the in-flight
-          // webpack source, so it doesn't actually need TSX to still
-          // be valid TSX by the time it runs — only that whatever
-          // text it receives still contains a recognizable
-          // `export function X(` / `export const X =` for its
-          // component-name regex, which is true before any transform.
-          webpackConfig.module.rules.push({
-            test: /\.tsx$/,
-            exclude: /node_modules/,
-            enforce: 'pre',
-            // Plain specifier — webpack resolves it via its own
-            // node_modules resolution, no need for require.resolve
-            // (which isn't available in this ESM config file anyway).
-            use: [{ loader: 'react-docgen-pro/webpack' }],
-          });
+      webpackFinal: async (webpackConfig) => {
+        webpackConfig.module ??= { rules: [] };
+        webpackConfig.module.rules ??= [];
+        // Our docgen loader runs first (enforce: 'pre'), appending
+        // plain JS to the raw source. It reads the file straight off
+        // disk via react-docgen-pro rather than the in-flight
+        // webpack source, so it doesn't actually need TSX to still
+        // be valid TSX by the time it runs — only that whatever
+        // text it receives still contains a recognizable
+        // `export function X(` / `export const X =` for its
+        // component-name regex, which is true before any transform.
+        webpackConfig.module.rules.push({
+          test: /\.tsx$/,
+          exclude: /node_modules/,
+          enforce: 'pre',
+          // Plain specifier — webpack resolves it via its own
+          // node_modules resolution, no need for require.resolve
+          // (which isn't available in this ESM config file anyway).
+          use: [{ loader: 'react-docgen-pro/webpack' }],
+        });
 
-          // Storybook 8.6's webpack5 builder doesn't transform .tsx
-          // out of the box (its native "experiments.typescript" fast
-          // path only supports plain .ts) — needs an explicit
-          // TSX-capable loader.
-          webpackConfig.module.rules.push({
-            test: /\.tsx?$/,
-            exclude: /node_modules/,
-            loader: 'esbuild-loader',
-            options: { loader: 'tsx', target: 'es2020' },
-          });
+        // Storybook 8.6's webpack5 builder doesn't transform .tsx
+        // out of the box (its native "experiments.typescript" fast
+        // path only supports plain .ts) — needs an explicit
+        // TSX-capable loader.
+        webpackConfig.module.rules.push({
+          test: /\.tsx?$/,
+          exclude: /node_modules/,
+          loader: 'esbuild-loader',
+          // jsx: 'automatic' matches the Vite builder's default (via
+          // @vitejs/plugin-react) — JSX compiles to calls into
+          // react/jsx-runtime instead of `React.createElement`, so
+          // stories/components don't need `import React from 'react'`
+          // in scope just to use JSX.
+          options: { loader: 'tsx', target: 'es2020', jsx: 'automatic' },
+        });
 
-          return webpackConfig;
-        },
-      } satisfies Partial<WebpackStorybookConfig>)
+        return webpackConfig;
+      },
+    } satisfies Partial<WebpackStorybookConfig>)
     : {
-        async viteFinal(viteConfig) {
-          const { viteLoader } = await import('react-docgen-pro/vite');
-          viteConfig.plugins ??= [];
-          viteConfig.plugins.push(viteLoader());
-          return viteConfig;
-        },
-      }),
+      async viteFinal(viteConfig) {
+        const { viteLoader } = await import('react-docgen-pro/vite');
+        viteConfig.plugins ??= [];
+        viteConfig.plugins.push(viteLoader());
+        // @storybook/react-vite doesn't add @vitejs/plugin-react itself
+        // (it only wires up docgen, which we've turned off), so JSX
+        // falls through to Vite's bare esbuild transform. That defaults
+        // to the classic runtime (`React.createElement`, requiring
+        // `React` in scope) unless told otherwise — set it to the
+        // automatic runtime instead, same as the webpack path.
+        viteConfig.esbuild = { ...viteConfig.esbuild, jsx: 'automatic' };
+        return viteConfig;
+      },
+    }),
 };
 
 export default config;

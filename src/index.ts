@@ -3,14 +3,24 @@ import { createProgramForFile } from './program.js';
 import { resolvePropsType } from './resolvePropsType.js';
 import { extractPropertiesFromType } from './extractProperties.js';
 import { resolveUnionBranches } from './handlers/union.js';
+import { truncateTypeName } from './utils/truncateTypeName.js';
+import { resolveOptions, type ParseOptions, type ResolvedParseOptions } from './options.js';
 import type { Documentation, PropDescriptor, UnionBranch } from './types.js';
 
 export type { Documentation, PropDescriptor, UnionBranch } from './types.js';
+export type { ParseOptions } from './options.js';
 
 /**
  * Entry point: TS/TSX file path in, Documentation JSON out.
+ *
+ * `options` lets consumers tune output shape/size — e.g.
+ * `{ maxTypeNameLength: 80 }` to raise (or `Infinity` to disable) the
+ * default 50-character cap on rendered type-name strings, or
+ * `maxDepth` to change how many levels of nested object props get
+ * expanded. See {@link ParseOptions}.
  */
-export function parse(filePath: string): Documentation {
+export function parse(filePath: string, options?: ParseOptions): Documentation {
+  const resolvedOptions = resolveOptions(options);
   const program = createProgramForFile(filePath);
   const sourceFile = program.getSourceFile(filePath);
 
@@ -20,7 +30,7 @@ export function parse(filePath: string): Documentation {
 
   const checker = program.getTypeChecker();
 
-  const resolved = resolvePropsType(sourceFile, checker);
+  const resolved = resolvePropsType(sourceFile, checker, resolvedOptions);
   if (!resolved) {
     throw new Error(`No "Props" interface or type alias found in: ${filePath}`);
   }
@@ -36,11 +46,11 @@ export function parse(filePath: string): Documentation {
   // present, it's also used to build a *union* (not intersection) flat
   // `props` map below, so every field from every branch shows up in
   // Controls, each keeping its own description where unambiguous.
-  const elements = resolveUnionBranches(topLevelType, contextNode, checker);
+  const elements = resolveUnionBranches(topLevelType, contextNode, checker, resolvedOptions);
 
   const props = elements
-    ? mergePropsAcrossBranches(elements)
-    : extractPropertiesFromType(topLevelType, contextNode, checker);
+    ? mergePropsAcrossBranches(elements, resolvedOptions)
+    : extractPropertiesFromType(topLevelType, contextNode, checker, 0, resolvedOptions);
 
   const description = docSymbol
     ? ts.displayPartsToString(docSymbol.getDocumentationComment(checker)).trim() || undefined
@@ -69,7 +79,10 @@ export function parse(filePath: string): Documentation {
  * every branch; a field that's optional or absent in even one branch
  * isn't safe to treat as always-required.
  */
-function mergePropsAcrossBranches(elements: UnionBranch[]): Record<string, PropDescriptor> {
+function mergePropsAcrossBranches(
+  elements: UnionBranch[],
+  options: ResolvedParseOptions
+): Record<string, PropDescriptor> {
   const allNames = new Set<string>();
   for (const branch of elements) {
     for (const name of Object.keys(branch.props)) allNames.add(name);
@@ -90,7 +103,7 @@ function mergePropsAcrossBranches(elements: UnionBranch[]): Record<string, PropD
     result[name] = {
       name,
       required,
-      type: { name: typeNames.join(' | ') },
+      type: { name: truncateTypeName(typeNames.join(' | '), options.maxTypeNameLength) },
       description: descriptions.size === 1 ? [...descriptions][0] : undefined,
       defaultValue: defaults.size === 1 ? inBranches[0]?.defaultValue : undefined,
     };

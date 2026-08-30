@@ -2,9 +2,8 @@ import ts from 'typescript';
 import type { PropDescriptor } from './types.js';
 import { getSymbolDescription, getDefaultValueTag } from './utils/jsdoc.js';
 import { resolveUnionBranches } from './handlers/union.js';
-
-/** How many levels of nested object props get expanded into `type.properties`. */
-const DEFAULT_MAX_DEPTH = 2;
+import { truncateTypeName } from './utils/truncateTypeName.js';
+import { DEFAULT_PARSE_OPTIONS, type ResolvedParseOptions } from './options.js';
 
 /**
  * Given an already-resolved ts.Type, walks `checker.getPropertiesOfType`,
@@ -30,9 +29,10 @@ export function extractPropertiesFromType(
   contextNode: ts.Node,
   checker: ts.TypeChecker,
   depth = 0,
-  maxDepth = DEFAULT_MAX_DEPTH,
+  options: ResolvedParseOptions = DEFAULT_PARSE_OPTIONS,
   seen: ReadonlySet<ts.Type> = new Set()
 ): Record<string, PropDescriptor> {
+  const { maxDepth } = options;
   const props: Record<string, PropDescriptor> = {};
 
   for (const symbol of checker.getPropertiesOfType(type)) {
@@ -55,7 +55,7 @@ export function extractPropertiesFromType(
     }
 
     const defaultValue = getDefaultValueTag(symbol, checker);
-    const elements = resolveUnionBranches(propType, contextNode, checker);
+    const elements = resolveUnionBranches(propType, contextNode, checker, options);
 
     // A union already gets its own per-branch breakdown via `elements`
     // above; `properties` is for the simpler case of a single nested
@@ -69,7 +69,7 @@ export function extractPropertiesFromType(
             contextNode,
             checker,
             depth + 1,
-            maxDepth,
+            options,
             new Set(seen).add(propType)
           )
         : undefined;
@@ -78,7 +78,7 @@ export function extractPropertiesFromType(
       name: symbol.name,
       required,
       type: {
-        name: checker.typeToString(propType),
+        name: truncateTypeName(checker.typeToString(propType), options.maxTypeNameLength),
         ...(elements ? { elements } : {}),
         ...(properties ? { properties } : {}),
       },

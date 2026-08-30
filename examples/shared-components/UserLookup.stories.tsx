@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { UserLookup } from './UserLookup';
 
 const meta: Meta<typeof UserLookup> = {
-  title: 'Partially Supported/Non-discriminated Union',
+  title: 'Parser/Unions & Enums/Union of Interfaces',
   component: UserLookup,
 };
 export default meta;

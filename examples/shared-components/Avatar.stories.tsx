@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Avatar } from './Avatar';
 
 const meta: Meta<typeof Avatar> = {
-  title: 'Fully Supported/Nested Object Prop',
+  title: 'Parser/Object Types/Nested Object Prop',
   component: Avatar,
 };
 export default meta;

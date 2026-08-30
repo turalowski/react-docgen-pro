@@ -421,3 +421,27 @@ describe('parse — respects the consuming project\'s tsconfig.json (fixture 20)
     );
   });
 });
+
+describe('parse — long type names (fixture 22)', () => {
+  it('truncates a prop type name to 50 chars by default, with a trailing ellipsis', () => {
+    const result = parse(fixture('22-long-type-name.tsx'));
+    expect(result.props.text.type.name.length).toBe(50);
+    expect(result.props.text.type.name.endsWith('…')).toBe(true);
+  });
+
+  it('respects a custom maxTypeNameLength', () => {
+    const result = parse(fixture('22-long-type-name.tsx'), { maxTypeNameLength: 20 });
+    expect(result.props.text.type.name.length).toBe(20);
+  });
+
+  it('leaves the type name untouched when maxTypeNameLength is Infinity', () => {
+    const result = parse(fixture('22-long-type-name.tsx'), { maxTypeNameLength: Infinity });
+    expect(result.props.text.type.name).not.toContain('…');
+    expect(result.props.text.type.name.length).toBeGreaterThan(50);
+  });
+
+  it('does not truncate a type name already under the limit', () => {
+    const result = parse(fixture('01-basic-interface.tsx'));
+    expect(result.props.name.type.name).toBe('string');
+  });
+});

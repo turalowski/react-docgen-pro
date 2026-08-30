@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { StatusPill, Status } from './StatusPill';
 
 const meta: Meta<typeof StatusPill> = {
-  title: 'Not Yet Supported/Enums',
+  title: 'Parser/Unions & Enums/Enum',
   component: StatusPill,
 };
 export default meta;

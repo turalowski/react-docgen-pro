@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { OrgChart } from './OrgChart';
 
 const meta: Meta<typeof OrgChart> = {
-  title: 'Partially Supported/Nested Object Prop (3+ levels)',
+  title: 'Parser/Object Types/Nested Object Prop',
   component: OrgChart,
 };
 export default meta;

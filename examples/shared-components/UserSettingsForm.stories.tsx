@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { UserSettingsForm } from './UserSettingsForm';
 
 const meta: Meta<typeof UserSettingsForm> = {
-  title: 'Fully Supported/Utility Types - Omit + Partial',
+  title: 'Parser/Advanced Utility Types/Omit + Partial',
   component: UserSettingsForm,
 };
 export default meta;

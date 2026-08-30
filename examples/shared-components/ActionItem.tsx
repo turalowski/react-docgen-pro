@@ -1,4 +1,3 @@
-import React from 'react';
 
 type LinkAction = {
   /** Discriminant: this branch navigates to a URL. */

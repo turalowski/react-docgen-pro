@@ -19,9 +19,17 @@ import { parse } from 'react-docgen-pro';
  * src/vite/index.js rather than shared — same small regex-based
  * heuristic, kept next to each builder integration so neither depends
  * on the other's internals.
+ *
+ * Loader options (e.g. `{ maxTypeNameLength: 80 }`) are set on the
+ * rule itself — `use: [{ loader: 'react-docgen-pro/webpack', options: {...} }]`
+ * — and read here via the standard webpack 5 `this.getOptions()`, then
+ * forwarded as-is to `parse()`. No schema validation: this loader
+ * takes exactly react-docgen-pro's own `ParseOptions` shape, so a
+ * typo here just surfaces the same way a bad `parse()` call would.
  */
 export default function webpackLoader(source) {
   const filePath = this.resourcePath;
+  const options = this.getOptions?.();
 
   if (!filePath.endsWith('.tsx') || filePath.includes('node_modules') || filePath.includes('.stories.')) {
     return source;
@@ -41,7 +49,7 @@ export default function webpackLoader(source) {
 
   let documentation;
   try {
-    documentation = parse(filePath);
+    documentation = parse(filePath, options);
   } catch {
     // No Props type in this file (e.g. not a component file) — skip silently.
     return source;

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ActionItem } from './ActionItem';
 
 const meta: Meta<typeof ActionItem> = {
-  title: 'Fully Supported/Discriminated Union (single prop)',
+  title: 'Parser/Unions & Enums/Discriminated Union',
   component: ActionItem,
 };
 export default meta;

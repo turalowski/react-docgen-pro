@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { UserBadge } from './UserBadge';
 
 const meta: Meta<typeof UserBadge> = {
-  title: 'Fully Supported/Utility Type - Pick',
+  title: 'Parser/Advanced Utility Types/Pick',
   component: UserBadge,
 };
 export default meta;

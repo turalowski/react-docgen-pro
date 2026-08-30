@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { GenericList } from './GenericList';
 
 const meta: Meta<typeof GenericList> = {
-  title: 'Not Yet Supported/Generic Components',
+  title: 'Parser/Generics/Generic Component Props',
   component: GenericList,
 };
 export default meta;

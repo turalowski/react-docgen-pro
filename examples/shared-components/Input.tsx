@@ -1,4 +1,3 @@
-import React from 'react';
 
 export interface InputTextProps {
   /** Discriminant identifying this as a plain text input. */
