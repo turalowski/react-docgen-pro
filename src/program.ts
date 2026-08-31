@@ -10,10 +10,48 @@ const FALLBACK_OPTIONS: ts.CompilerOptions = {
   strict: true,
 };
 
+// Every file parsed with the same effective compiler options (i.e. every
+// file under the same resolved tsconfig, or every file that falls back to
+// FALLBACK_OPTIONS) shares one long-lived ts.LanguageService instead of
+// getting its own throwaway ts.Program. A LanguageService reparses only
+// the files whose version actually changed since the last getProgram()
+// call — it re-checks the rest (React's own types, lib.dom.d.ts, sibling
+// component files already seen) from its cached ASTs. Building a fresh
+// ts.Program per file, as this used to do, redid that shared work (often
+// hundreds of files' worth of parsing/binding) on every single call —
+// the dominant cost behind slow Storybook startup with many components.
+//
+// Keyed by resolved tsconfig path (or FALLBACK_KEY when none is found),
+// since that's exactly the granularity at which compiler options — and
+// therefore which files can safely share one Program — are the same.
+const FALLBACK_KEY = '\0fallback';
+
+interface ProjectEntry {
+  service: ts.LanguageService;
+  rootFiles: Set<string>;
+  versions: Map<string, number>;
+}
+
+const projectCache = new Map<string, ProjectEntry>();
+
+// Memoizes the two filesystem walks resolveCompilerOptions used to redo
+// on every call: ts.findConfigFile (per directory) and reading/parsing
+// the tsconfig it finds (per resolved config path). Many files share a
+// directory or a tsconfig, so this turns O(files) I/O into O(directories)
+// + O(tsconfigs).
+const configPathByDir = new Map<string, string | null>();
+const optionsByConfigPath = new Map<string, ts.CompilerOptions>();
+const registry = ts.createDocumentRegistry();
+
 /**
- * Creates a ts.Program for a single entry file, using the *consuming
- * project's* real tsconfig.json when one can be found (walking up from
- * the file's directory), rather than a fixed set of compiler options.
+ * Returns a ts.Program that has `filePath` up to date and ready to read,
+ * reusing a shared per-project ts.LanguageService rather than building a
+ * new ts.Program from scratch on every call. See the module comment above
+ * for why that distinction matters.
+ *
+ * Uses the *consuming project's* real tsconfig.json when one can be found
+ * (walking up from the file's directory), rather than a fixed set of
+ * compiler options.
  *
  * This matters beyond just matching the project's strictness settings:
  * without the real `baseUrl`/`paths`, any import that relies on a path
@@ -25,16 +63,53 @@ const FALLBACK_OPTIONS: ts.CompilerOptions = {
  * .tsx file in isolation still works.
  */
 export function createProgramForFile(filePath: string): ts.Program {
-  const options = resolveCompilerOptions(filePath);
-  return ts.createProgram([filePath], options);
+  const { key, options, projectDir } = resolveProjectForFile(filePath);
+  const entry = getOrCreateProject(key, options, projectDir);
+
+  entry.rootFiles.add(filePath);
+  // Always bump the requested file's own version so its content is
+  // re-read from disk on every call (needed for correctness across
+  // repeated parse() calls / watch-mode edits) — sibling files already
+  // in rootFiles keep their cached version, which is what lets the
+  // LanguageService skip re-parsing them.
+  entry.versions.set(filePath, (entry.versions.get(filePath) ?? 0) + 1);
+
+  const program = entry.service.getProgram();
+  if (!program) {
+    throw new Error(`Could not build a TypeScript program for: ${filePath}`);
+  }
+  return program;
 }
 
-function resolveCompilerOptions(filePath: string): ts.CompilerOptions {
-  const foundPath = ts.findConfigFile(path.dirname(filePath), ts.sys.fileExists);
-  if (!foundPath) return FALLBACK_OPTIONS;
+function resolveProjectForFile(filePath: string): {
+  key: string;
+  options: ts.CompilerOptions;
+  projectDir: string;
+} {
+  const configPath = resolveConfigPathForDir(path.dirname(filePath));
 
-  const configPath = resolveSolutionStyleReferences(foundPath);
+  if (!configPath) {
+    return { key: FALLBACK_KEY, options: FALLBACK_OPTIONS, projectDir: process.cwd() };
+  }
 
+  let options = optionsByConfigPath.get(configPath);
+  if (!options) {
+    options = readCompilerOptions(configPath);
+    optionsByConfigPath.set(configPath, options);
+  }
+  return { key: configPath, options, projectDir: path.dirname(configPath) };
+}
+
+function resolveConfigPathForDir(dir: string): string | null {
+  if (configPathByDir.has(dir)) return configPathByDir.get(dir) ?? null;
+
+  const foundPath = ts.findConfigFile(dir, ts.sys.fileExists);
+  const resolved = foundPath ? resolveSolutionStyleReferences(foundPath) : null;
+  configPathByDir.set(dir, resolved);
+  return resolved;
+}
+
+function readCompilerOptions(configPath: string): ts.CompilerOptions {
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
   if (configFile.error) return FALLBACK_OPTIONS;
 
@@ -52,6 +127,45 @@ function resolveCompilerOptions(filePath: string): ts.CompilerOptions {
     ...parsed.options,
     jsx: parsed.options.jsx ?? ts.JsxEmit.ReactJSX,
   };
+}
+
+function getOrCreateProject(
+  key: string,
+  options: ts.CompilerOptions,
+  projectDir: string
+): ProjectEntry {
+  const cached = projectCache.get(key);
+  if (cached) return cached;
+
+  const rootFiles = new Set<string>();
+  const versions = new Map<string, number>();
+
+  const host: ts.LanguageServiceHost = {
+    getScriptFileNames: () => [...rootFiles],
+    getScriptVersion: (fileName) => String(versions.get(fileName) ?? 0),
+    getScriptSnapshot: (fileName) => {
+      if (!ts.sys.fileExists(fileName)) return undefined;
+      const text = ts.sys.readFile(fileName);
+      return text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
+    },
+    getCurrentDirectory: () => projectDir,
+    getCompilationSettings: () => options,
+    getDefaultLibFileName: (opts) => ts.getDefaultLibFilePath(opts),
+    fileExists: ts.sys.fileExists,
+    readFile: ts.sys.readFile,
+    readDirectory: ts.sys.readDirectory,
+    directoryExists: ts.sys.directoryExists,
+    getDirectories: ts.sys.getDirectories,
+    realpath: ts.sys.realpath,
+  };
+
+  const entry: ProjectEntry = {
+    service: ts.createLanguageService(host, registry),
+    rootFiles,
+    versions,
+  };
+  projectCache.set(key, entry);
+  return entry;
 }
 
 /**

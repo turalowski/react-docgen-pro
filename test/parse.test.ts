@@ -445,3 +445,66 @@ describe('parse — long type names (fixture 22)', () => {
     expect(result.props.name.type.name).toBe('string');
   });
 });
+
+describe('parse — array of object prop (fixture 23)', () => {
+  it('keeps the array type name and expands the element type\'s own fields alongside it', () => {
+    const result = parse(fixture('23-array-of-object-prop.tsx'));
+    expect(result).toMatchSnapshot();
+    // Type identity (including the `[]`) is preserved, not replaced by the expansion.
+    expect(result.props.tags.type.name).toBe('Tag[]');
+    const nested = result.props.tags.type.properties!;
+    expect(Object.keys(nested).sort()).toEqual(['id', 'label']);
+    expect(nested.label.description).toBe('Display label.');
+  });
+
+  it('does not expand a plain array of primitives', () => {
+    const result = parse(fixture('23-array-of-object-prop.tsx'));
+    expect(result.props.names.type.name).toBe('string[]');
+    expect(result.props.names.type.properties).toBeUndefined();
+  });
+
+  it('does not recurse forever on a self-referential type reached through an array', () => {
+    const result = parse(fixture('23-array-of-object-prop.tsx'));
+    const root = result.props.root.type.properties!;
+    expect(root.label).toBeDefined();
+    // "children" is TreeNode[] again — expanding it would recurse
+    // forever, so it correctly stays unexpanded (bare type name only).
+    expect(root.children.type.name).toBe('TreeNode[]');
+    expect(root.children.type.properties).toBeUndefined();
+  });
+});
+
+describe('parse — inline anonymous object prop (fixture 24)', () => {
+  it('replaces an inline object type\'s own dumped-out shape with a generic placeholder', () => {
+    const result = parse(fixture('24-anonymous-object-prop.tsx'));
+    expect(result).toMatchSnapshot();
+    expect(result.props.controls.type.name).toBe('Props');
+    expect(Object.keys(result.props.controls.type.properties!).sort()).toEqual([
+      'disabled',
+      'label',
+      'visible',
+    ]);
+  });
+
+  it('keeps a named interface reference\'s real name', () => {
+    const result = parse(fixture('24-anonymous-object-prop.tsx'));
+    expect(result.props.named.type.name).toBe('AvatarUser');
+  });
+
+  it('keeps a named type alias to an object literal\'s real name', () => {
+    const result = parse(fixture('24-anonymous-object-prop.tsx'));
+    expect(result.props.aliased.type.name).toBe('ControlsShape');
+  });
+
+  it('uses the placeholder plus [] for an array of an inline object type', () => {
+    const result = parse(fixture('24-anonymous-object-prop.tsx'));
+    expect(result.props.cards.type.name).toBe('Props[]');
+    expect(result.props.cards.type.properties!.title).toBeDefined();
+  });
+
+  it('leaves a plain array of primitives untouched', () => {
+    const result = parse(fixture('24-anonymous-object-prop.tsx'));
+    expect(result.props.names.type.name).toBe('string[]');
+    expect(result.props.names.type.properties).toBeUndefined();
+  });
+});

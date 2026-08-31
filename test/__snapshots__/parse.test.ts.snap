@@ -133,6 +133,75 @@ exports[`parse — Required<T> (fixture 12) > marks every prop required, even on
 }
 `;
 
+exports[`parse — array of object prop (fixture 23) > keeps the array type name and expands the element type's own fields alongside it 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "names": {
+      "description": "Plain string values — nothing to expand.",
+      "name": "names",
+      "required": true,
+      "type": {
+        "name": "string[]",
+      },
+    },
+    "root": {
+      "description": "Root of a tree.",
+      "name": "root",
+      "required": true,
+      "type": {
+        "name": "TreeNode",
+        "properties": {
+          "children": {
+            "description": "Child nodes, same shape as this one — self-referential through an array.",
+            "name": "children",
+            "required": true,
+            "type": {
+              "name": "TreeNode[]",
+            },
+          },
+          "label": {
+            "description": undefined,
+            "name": "label",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+    "tags": {
+      "description": "Tags attached to this item — an array of a plain object shape.",
+      "name": "tags",
+      "required": true,
+      "type": {
+        "name": "Tag[]",
+        "properties": {
+          "id": {
+            "description": "Unique id for the tag.",
+            "name": "id",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+          "label": {
+            "description": "Display label.",
+            "name": "label",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
 exports[`parse — basic interface (fixture 01) > extracts a plain Props interface 1`] = `
 {
   "description": undefined,
@@ -301,6 +370,111 @@ exports[`parse — extended interface (fixture 03) > includes both own and inher
       "required": true,
       "type": {
         "name": "string",
+      },
+    },
+  },
+}
+`;
+
+exports[`parse — inline anonymous object prop (fixture 24) > replaces an inline object type's own dumped-out shape with a generic placeholder 1`] = `
+{
+  "description": undefined,
+  "displayName": "Props",
+  "props": {
+    "aliased": {
+      "description": "Named type alias to an object literal — keeps its real name.",
+      "name": "aliased",
+      "required": true,
+      "type": {
+        "name": "ControlsShape",
+        "properties": {
+          "visible": {
+            "description": undefined,
+            "name": "visible",
+            "required": true,
+            "type": {
+              "name": "boolean",
+            },
+          },
+        },
+      },
+    },
+    "cards": {
+      "description": "Array of an inline, unnamed object type.",
+      "name": "cards",
+      "required": true,
+      "type": {
+        "name": "Props[]",
+        "properties": {
+          "title": {
+            "description": undefined,
+            "name": "title",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+    "controls": {
+      "description": "Inline, unnamed object type — nothing to show as a summary but its own shape.",
+      "name": "controls",
+      "required": true,
+      "type": {
+        "name": "Props",
+        "properties": {
+          "disabled": {
+            "description": undefined,
+            "name": "disabled",
+            "required": false,
+            "type": {
+              "name": "boolean",
+            },
+          },
+          "label": {
+            "description": undefined,
+            "name": "label",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+          "visible": {
+            "description": undefined,
+            "name": "visible",
+            "required": true,
+            "type": {
+              "name": "boolean",
+            },
+          },
+        },
+      },
+    },
+    "named": {
+      "description": "Named interface reference — keeps its real name.",
+      "name": "named",
+      "required": true,
+      "type": {
+        "name": "AvatarUser",
+        "properties": {
+          "name": {
+            "description": undefined,
+            "name": "name",
+            "required": true,
+            "type": {
+              "name": "string",
+            },
+          },
+        },
+      },
+    },
+    "names": {
+      "description": "Array of primitives — untouched, nothing to expand.",
+      "name": "names",
+      "required": true,
+      "type": {
+        "name": "string[]",
       },
     },
   },

@@ -52,20 +52,32 @@ function rdrpArgTypesEnhancer(context) {
 
 /**
  * For a prop whose type resolved to a nested object shape (core's
- * `type.properties`, e.g. `user: AvatarUser`) or a union of object
- * shapes (`type.elements`, e.g. `action: LinkAction | ButtonAction`),
- * Storybook's default Controls table would otherwise just show the
- * bare reference name(s) as the Type column with no way to see the
- * actual fields.
+ * `type.properties`, e.g. `user: AvatarUser`, or `tags: Tag[]`) or a
+ * union of object shapes (`type.elements`, e.g. `action: LinkAction |
+ * ButtonAction`), Storybook's default Controls table would otherwise
+ * just show the bare reference name(s) as the Type column with no way
+ * to see the actual fields.
  *
  * Storybook's Type column supports a summary/detail pair —
  * `table.type.summary` is the visible, clickable text; `table.type.
  * detail` opens in a popover on click. This keeps summary as the
- * original type name(s) (e.g. "AvatarUser", or "LinkAction |
+ * original type name(s) (e.g. "AvatarUser", "Tag[]", or "LinkAction |
  * ButtonAction") — clickable, recognizable — and puts the full
  * expanded shape in detail, rendered recursively so an
  * interface-inside-an-interface (core expands up to 2 levels) shows
  * its own nested shape too, not just the outer one.
+ *
+ * Also disables Storybook's default interactive "object" control for
+ * every array-typed prop (`control: false`). react-docgen-typescript-
+ * shaped type names it can't otherwise classify (any named reference,
+ * including plain arrays like `Tag[]` or `string[]`) fall back to that
+ * generic control, which edits the *runtime* value via react-inspector
+ * — clicking its "show non-enumerable properties" toggle on an array
+ * value walks Array.prototype, surfacing push/pop/map/... as if they
+ * were editable fields. There's no safe/useful live-edit UI for an
+ * array here anyway, so this table.type.detail popover (read-only,
+ * static, no prototype involved) replaces it as the way to inspect the
+ * shape instead.
  */
 function rdrpNestedShapeEnhancer(context) {
   const props = context.component?.__docgenInfo?.props;
@@ -76,23 +88,46 @@ function rdrpNestedShapeEnhancer(context) {
   for (const [name, prop] of Object.entries(props)) {
     if (!argTypes[name]) continue;
 
-    const detail = prop.type?.properties
-      ? renderShape(prop.type.properties)
-      : prop.type?.elements
-        ? prop.type.elements.map((branch) => renderShape(branch.props)).join(' | ')
-        : undefined;
-    if (!detail) continue;
+    const isArray = isArrayTypeName(prop.type?.name);
+    const detail = expandedShapeFor(prop);
 
     argTypes[name] = {
       ...argTypes[name],
-      table: {
-        ...argTypes[name].table,
-        type: { summary: prop.type.name, detail },
-      },
+      ...(isArray ? { control: false } : {}),
+      ...(detail
+        ? { table: { ...argTypes[name].table, type: { summary: prop.type.name, detail } } }
+        : {}),
     };
   }
 
   return argTypes;
+}
+
+/** True for a TS-printed array type name — "Tag[]", "string[]", "readonly Tag[]" — covering every form checker.typeToString produces for an array type. */
+function isArrayTypeName(name) {
+  return typeof name === 'string' && /\[\]$/.test(name);
+}
+
+/**
+ * Renders the expanded shape for one PropDescriptor — its `type.
+ * properties` (wrapped in `Array<...>` when the prop's own type name is
+ * an array, e.g. `tags: Tag[]` renders as `Array<{ ... }>`, not a bare
+ * `{ ... }` that reads as if `tags` held a single Tag) or its `type.
+ * elements` (each union branch's shape, joined with ` | `). Returns
+ * undefined when there's no structure to expand, e.g. a plain
+ * `string[]` — a regular array has nothing more useful to show than
+ * its type name, which is already the clickable-free (non-object-
+ * control) Type column text.
+ */
+function expandedShapeFor(prop, indent = 0) {
+  if (prop.type?.properties) {
+    const shape = renderShape(prop.type.properties, indent);
+    return isArrayTypeName(prop.type.name) ? `Array<${shape}>` : shape;
+  }
+  if (prop.type?.elements) {
+    return prop.type.elements.map((branch) => renderShape(branch.props, indent)).join(' | ');
+  }
+  return undefined;
 }
 
 /** Recursively renders a props map as a pretty-printed object shape, expanding nested properties/elements at any depth core resolved. */
@@ -101,12 +136,7 @@ function renderShape(properties, indent = 0) {
   const closePad = '  '.repeat(indent);
 
   const fields = Object.values(properties).map((p) => {
-    const valueType = p.type?.properties
-      ? renderShape(p.type.properties, indent + 1)
-      : p.type?.elements
-        ? p.type.elements.map((branch) => renderShape(branch.props, indent + 1)).join(' | ')
-        : p.type?.name ?? 'unknown';
-
+    const valueType = expandedShapeFor(p, indent + 1) ?? p.type?.name ?? 'unknown';
     return `${pad}${p.name}${p.required ? '' : '?'}: ${valueType}`;
   });
 

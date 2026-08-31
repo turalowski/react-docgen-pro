@@ -5,6 +5,9 @@ import { resolveUnionBranches } from './handlers/union.js';
 import { truncateTypeName } from './utils/truncateTypeName.js';
 import { DEFAULT_PARSE_OPTIONS, type ResolvedParseOptions } from './options.js';
 
+/** Summary label shown in place of an inline/unnamed object type's own printed shape — see the comment at its use site below. */
+const ANONYMOUS_OBJECT_LABEL = 'Props';
+
 /**
  * Given an already-resolved ts.Type, walks `checker.getPropertiesOfType`,
  * converting each property symbol into a PropDescriptor.
@@ -57,28 +60,63 @@ export function extractPropertiesFromType(
     const defaultValue = getDefaultValueTag(symbol, checker);
     const elements = resolveUnionBranches(propType, contextNode, checker, options);
 
+    // For an array prop (`tags: Tag[]`), the interesting shape to expand
+    // is the *element* type, not the array itself — `checker.
+    // getPropertiesOfType` on an array type would just walk Array.prototype
+    // (length, push, map, ...), which is exactly the noise consumers
+    // don't want surfaced. Array<T>/ReadonlyArray<T> are always generic
+    // type references, so their element type is their sole type argument.
+    const arrayElementType = checker.isArrayType(propType)
+      ? checker.getTypeArguments(propType as ts.TypeReference)[0]
+      : undefined;
+    const expandableType = arrayElementType ?? propType;
+
     // A union already gets its own per-branch breakdown via `elements`
     // above; `properties` is for the simpler case of a single nested
-    // object shape, e.g. `user: AvatarUser`. type.name stays the raw
-    // reference ("AvatarUser") so the type identity is still visible —
-    // this is the expanded shape alongside it, not a replacement.
+    // object shape, e.g. `user: AvatarUser` or `tags: Tag[]`. type.name
+    // stays the raw reference ("AvatarUser", "Tag[]") so the type
+    // identity is still visible — this is the expanded shape alongside
+    // it, not a replacement. For `tags: Tag[]` this is Tag's own
+    // properties, not a property named after an array index.
     const properties =
-      !elements && depth < maxDepth && !seen.has(propType) && isExpandableObjectType(propType, checker)
+      !elements &&
+      expandableType &&
+      depth < maxDepth &&
+      !seen.has(expandableType) &&
+      isExpandableObjectType(expandableType, checker)
         ? extractPropertiesFromType(
-            propType,
+            expandableType,
             contextNode,
             checker,
             depth + 1,
             options,
-            new Set(seen).add(propType)
+            new Set(seen).add(expandableType)
           )
         : undefined;
+
+    // An inline, unnamed object type (`controls: { visible: boolean; ... }`,
+    // as opposed to a named interface/type-alias reference like `user:
+    // AvatarUser`) has no real identity to show as a summary — TS's own
+    // printed form is just the whole shape crammed onto one line, which
+    // truncateTypeName then cuts off mid-field ("{ visible: boolean;
+    // label: string; disabl…"). There's nothing useful about that as a
+    // *name*, and it duplicates `properties` below anyway, so swap it
+    // for a short, generic placeholder instead of truncating it — the
+    // real shape is still one click away via `properties`. Keeps the
+    // `[]` suffix for an anonymous-object array element so the summary
+    // doesn't silently drop that it's a list.
+    const isAnonymousObject = !!properties && isAnonymousObjectType(expandableType);
+    const typeName = isAnonymousObject
+      ? arrayElementType
+        ? `${ANONYMOUS_OBJECT_LABEL}[]`
+        : ANONYMOUS_OBJECT_LABEL
+      : truncateTypeName(checker.typeToString(propType), options.maxTypeNameLength);
 
     props[symbol.name] = {
       name: symbol.name,
       required,
       type: {
-        name: truncateTypeName(checker.typeToString(propType), options.maxTypeNameLength),
+        name: typeName,
         ...(elements ? { elements } : {}),
         ...(properties ? { properties } : {}),
       },
@@ -106,4 +144,22 @@ function isExpandableObjectType(type: ts.Type, checker: ts.TypeChecker): boolean
   }
 
   return checker.getPropertiesOfType(type).length > 0;
+}
+
+/**
+ * True for an object type with no name to show. A genuinely inline
+ * `{ ... }` written directly at the property position still gets a
+ * symbol from the checker — it's just the synthetic one every type
+ * literal gets, named `ts.InternalSymbolName.Type` ("__type"), not a
+ * real declared name — so checking for *a* symbol isn't enough; this
+ * checks for a *named* one. `aliasSymbol` is checked separately since
+ * `type Foo = { ... }` carries the same symbol-less underlying type but
+ * has a real name one level up, via the alias rather than the type
+ * itself — both it and a named interface reference print their own
+ * name via `checker.typeToString` and should keep it.
+ */
+function isAnonymousObjectType(type: ts.Type): boolean {
+  const symbol = type.getSymbol();
+  const hasRealSymbolName = !!symbol && symbol.name !== ts.InternalSymbolName.Type;
+  return !hasRealSymbolName && !type.aliasSymbol;
 }
