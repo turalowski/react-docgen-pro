@@ -6,8 +6,12 @@
   "scripts": {
     "storybook": "storybook dev -p 6006",
     "storybook:webpack": "STORYBOOK_BUILDER=webpack storybook dev -p 6006",
+    "storybook:react-docgen": "STORYBOOK_DOCGEN=react-docgen storybook dev -p 6006",
+    "storybook:react-docgen-typescript": "STORYBOOK_DOCGEN=react-docgen-typescript storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "build-storybook:webpack": "STORYBOOK_BUILDER=webpack storybook build"
+    "build-storybook:webpack": "STORYBOOK_BUILDER=webpack storybook build",
+    "build-storybook:react-docgen": "STORYBOOK_DOCGEN=react-docgen storybook build",
+    "build-storybook:react-docgen-typescript": "STORYBOOK_DOCGEN=react-docgen-typescript storybook build"
   },
   "dependencies": {
     "react": "^18.3.0",

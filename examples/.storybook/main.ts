@@ -7,6 +7,15 @@ import type { StorybookConfig as WebpackStorybookConfig } from '@storybook/react
 // sandboxes — see `npm run storybook` vs `npm run storybook:webpack`.
 const useWebpack = process.env.STORYBOOK_BUILDER === 'webpack';
 
+// STORYBOOK_DOCGEN switches which docgen engine feeds Controls/argTypes:
+// 'pro' (default) uses react-docgen-pro, wired in below via the Vite
+// plugin / webpack loader; 'react-docgen' and 'react-docgen-typescript'
+// fall back to Storybook's own built-in parsers so the results can be
+// compared side by side — see `npm run storybook:react-docgen` /
+// `npm run storybook:react-docgen-typescript` vs plain `npm run storybook`.
+const docgen = process.env.STORYBOOK_DOCGEN ?? 'pro';
+const usePro = docgen === 'pro';
+
 const config: StorybookConfig = {
   framework: useWebpack ? '@storybook/react-webpack5' : '@storybook/react-vite',
   stories: ['../shared-components/**/*.stories.@(ts|tsx)'],
@@ -16,37 +25,44 @@ const config: StorybookConfig = {
     // hides fields from non-active union branches on every story, no
     // per-story wiring needed. Builder-agnostic: a preview annotation,
     // not tied to Vite's transform pipeline, so it works unchanged
-    // under webpack5 too.
-    'react-docgen-pro/vite/preset',
+    // under webpack5 too. Only relevant (and only registered) when
+    // react-docgen-pro is actually supplying the docgen info.
+    ...(usePro ? ['react-docgen-pro/vite/preset'] : []),
   ],
   typescript: {
-    // Turn off Storybook's built-in docgen entirely — __docgenInfo is
-    // supplied ourselves: via the Vite plugin below for the Vite
-    // builder, or via the webpack loader below for webpack5.
-    reactDocgen: false,
+    // With react-docgen-pro, turn off Storybook's built-in docgen
+    // entirely — __docgenInfo is supplied ourselves: via the Vite
+    // plugin below for the Vite builder, or via the webpack loader
+    // below for webpack5. Otherwise, defer to whichever of
+    // Storybook's built-in parsers STORYBOOK_DOCGEN selected.
+    reactDocgen: usePro
+      ? false
+      : (docgen as 'react-docgen' | 'react-docgen-typescript'),
   },
   ...(useWebpack
     ? ({
       webpackFinal: async (webpackConfig) => {
         webpackConfig.module ??= { rules: [] };
         webpackConfig.module.rules ??= [];
-        // Our docgen loader runs first (enforce: 'pre'), appending
-        // plain JS to the raw source. It reads the file straight off
-        // disk via react-docgen-pro rather than the in-flight
-        // webpack source, so it doesn't actually need TSX to still
-        // be valid TSX by the time it runs — only that whatever
-        // text it receives still contains a recognizable
-        // `export function X(` / `export const X =` for its
-        // component-name regex, which is true before any transform.
-        webpackConfig.module.rules.push({
-          test: /\.tsx$/,
-          exclude: /node_modules/,
-          enforce: 'pre',
-          // Plain specifier — webpack resolves it via its own
-          // node_modules resolution, no need for require.resolve
-          // (which isn't available in this ESM config file anyway).
-          use: [{ loader: 'react-docgen-pro/webpack' }],
-        });
+        if (usePro) {
+          // Our docgen loader runs first (enforce: 'pre'), appending
+          // plain JS to the raw source. It reads the file straight off
+          // disk via react-docgen-pro rather than the in-flight
+          // webpack source, so it doesn't actually need TSX to still
+          // be valid TSX by the time it runs — only that whatever
+          // text it receives still contains a recognizable
+          // `export function X(` / `export const X =` for its
+          // component-name regex, which is true before any transform.
+          webpackConfig.module.rules.push({
+            test: /\.tsx$/,
+            exclude: /node_modules/,
+            enforce: 'pre',
+            // Plain specifier — webpack resolves it via its own
+            // node_modules resolution, no need for require.resolve
+            // (which isn't available in this ESM config file anyway).
+            use: [{ loader: 'react-docgen-pro/webpack' }],
+          });
+        }
 
         // Storybook 8.6's webpack5 builder doesn't transform .tsx
         // out of the box (its native "experiments.typescript" fast
@@ -69,9 +85,11 @@ const config: StorybookConfig = {
     } satisfies Partial<WebpackStorybookConfig>)
     : {
       async viteFinal(viteConfig) {
-        const { viteLoader } = await import('react-docgen-pro/vite');
-        viteConfig.plugins ??= [];
-        viteConfig.plugins.push(viteLoader());
+        if (usePro) {
+          const { viteLoader } = await import('react-docgen-pro/vite');
+          viteConfig.plugins ??= [];
+          viteConfig.plugins.push(viteLoader());
+        }
         // @storybook/react-vite doesn't add @vitejs/plugin-react itself
         // (it only wires up docgen, which we've turned off), so JSX
         // falls through to Vite's bare esbuild transform. That defaults

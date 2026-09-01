@@ -1,6 +1,6 @@
 # react-docgen-pro
 
-It's a typescript-aware props parfer for React projects, built on the Typescript compiler API. 
+It's a typescript-aware props parser for React projects, built on the Typescript compiler API.
 
 ## Motivation
 
@@ -20,6 +20,26 @@ They work fine up to a point, but often you hit a wall, need to start overriding
 To fix this, I decided to use Claude Code and try writing my own parser to see if it could be solved properly.
 
 That's how this journey started.
+
+## Comparison with react-docgen and react-docgen-typescript
+
+| Feature | react-docgen | react-docgen-typescript | react-docgen-pro |
+| ----- | ----- | ----- | ----- |
+| Primitive properties | renders type | renders type | renders type |
+| Named interface | renders only name of interface (unable to see the structure) | renders only name of interface (unable to see the structure) | renders name of interface, clickable to see the structure of the interface |
+| Array of named interface | same limitation as previous one | same limitation as previous one | works the same as previous one |
+| Anonymous interface | renders structure of interface as text | renders structure of interface as text | renders clickable Props interface, click to see the structure |
+| Array of anonymous interfaces | same limitation as previous one | same limitation as previous one | works the same as previous one |
+| Union primitives | x | x | x |
+| Union interfaces | renders 'union' keyword | renders name of interfaces | renders clickable names of interfaces, click to see the type of each |
+| Nested interfaces | shows only name of interface | shows only name of interface | clickable name of interface, click to see the structure |
+| Utility functions (Pick, Omit, Partial, Required) | renders name of utility function ('Pick', 'Omit', etc.) | renders the definition, e.g. `Pick<FirstAction, "type">` | renders clickable definition, click to see the structure |
+| forwardRef | x | x | x |
+| HOC | x | x | x |
+
+Here is the visual version of comparison of these 3 tools:
+
+![Comparison](./comparison.png)
 
 ## Quick start
 
@@ -131,14 +151,14 @@ const doc = parse('./Button.tsx', { maxTypeNameLength: 80 });
 From simplest to most complex. Each fixture in [test/fixtures](test/fixtures)
 is a real example of the row it's next to.
 
-- [ ] Plain interfaces with required and optional properties (also `default` tag) 
+- [ ] Plain interfaces with required and optional properties (also `default` tag)
 - [ ] Plain interfaces with nested interfaces
 - [ ] Plain interfaces where props using named interfaces
 - [ ] Union interfaces (`'A' | 'B' | 'C'`)
 - [ ] Intersections  (`A & B`) and `extends` keyword
 - [ ] Unions of primitives (`'a' | 'b' | 'c'`)
 - [ ] Utility types - `Pick`, `Omit`, `Partial`, `Required`
-- [ ] Components written as a function declaration, `React.FC`, `forwardRef` or wrapped in `memo` 
+- [ ] Components written as a function declaration, `React.FC`, `forwardRef` or wrapped in `memo`
 - [ ] Generic components (`function List<T>(props: ListProps<T>)`)
 - Mapped types (`{ [K in Keys]: ... }`) beyond the built-in `Partial`/
   `Required`/`Record`/`Pick`/`Omit` helpers
