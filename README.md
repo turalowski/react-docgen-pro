@@ -158,9 +158,9 @@ const doc = parse('./Button.tsx', { maxTypeNameLength: 80 });
 ```
 ## Branching strategy
 
-As this project is at early stage, I just push everything to main branch directly. I understand it's not feasable, and if I want it to improve as proper library, I need to follow correct rules. My main idea is having:
+As this project is at early stage, I just push everything to main branch directly. I understand it's not feasible, and if I want it to improve as proper library, I need to follow correct rules. My main idea is having:
 
-- `main` - always in a working, relesable state. Nothing broken merges here.
+- `main` - always in a working, releasable state. Nothing broken merges here.
 - `feature/fix branches` - one per change, branched off `main`.
 
 All feature/fix branches can be merge back into `main` via PR.
