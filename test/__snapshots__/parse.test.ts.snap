@@ -307,6 +307,9 @@ exports[`parse — discriminated union of objects (fixture 06) > splits a union-
                 "required": true,
                 "type": {
                   "name": "() => void",
+                  "returnType": {
+                    "name": "void",
+                  },
                 },
               },
               "type": {
@@ -547,6 +550,9 @@ exports[`parse — multi-level extends (fixture 04) > flattens a three-level ext
       "required": false,
       "type": {
         "name": "() => void",
+        "returnType": {
+          "name": "void",
+        },
       },
     },
   },

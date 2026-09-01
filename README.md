@@ -30,14 +30,14 @@ That's how this journey started.
 | Array of named interface | same limitation as previous one | same limitation as previous one | works the same as previous one |
 | Anonymous interface | renders structure of interface as text | renders structure of interface as text | renders clickable Props interface, click to see the structure |
 | Array of anonymous interfaces | same limitation as previous one | same limitation as previous one | works the same as previous one |
-| Union primitives | x | x | x |
+| Union primitives | renders 'union' keyword | renders name of each type | renders name of each type |
 | Union interfaces | renders 'union' keyword | renders name of interfaces | renders clickable names of interfaces, click to see the type of each |
 | Nested interfaces | shows only name of interface | shows only name of interface | clickable name of interface, click to see the structure |
 | Utility functions (Pick, Omit, Partial, Required) | renders name of utility function ('Pick', 'Omit', etc.) | renders the definition, e.g. `Pick<FirstAction, "type">` | renders clickable definition, click to see the structure |
 | forwardRef | x | x | x |
 | HOC | x | x | x |
 
-Here is the visual version of comparison of these 3 tools:
+Here is the visual version of comparison of these 3 tools (from left to right: react-docgen, react-docgen-typescript, react-docgen-pro):
 
 ![Comparison](./comparison.png)
 
@@ -145,24 +145,3 @@ import { parse } from 'react-docgen-pro';
 
 const doc = parse('./Button.tsx', { maxTypeNameLength: 80 });
 ```
-
-## Roadmap: supported prop shapes
-
-From simplest to most complex. Each fixture in [test/fixtures](test/fixtures)
-is a real example of the row it's next to.
-
-- [ ] Plain interfaces with required and optional properties (also `default` tag)
-- [ ] Plain interfaces with nested interfaces
-- [ ] Plain interfaces where props using named interfaces
-- [ ] Union interfaces (`'A' | 'B' | 'C'`)
-- [ ] Intersections  (`A & B`) and `extends` keyword
-- [ ] Unions of primitives (`'a' | 'b' | 'c'`)
-- [ ] Utility types - `Pick`, `Omit`, `Partial`, `Required`
-- [ ] Components written as a function declaration, `React.FC`, `forwardRef` or wrapped in `memo`
-- [ ] Generic components (`function List<T>(props: ListProps<T>)`)
-- Mapped types (`{ [K in Keys]: ... }`) beyond the built-in `Partial`/
-  `Required`/`Record`/`Pick`/`Omit` helpers
-- Function-typed props (event handlers, render props) are recorded by their
-  signature string only — no structured breakdown of parameter/return types
-- Enums (`enum Variant { ... }`) as a prop's type — resolved to their
-  underlying primitive rather than the individual member names

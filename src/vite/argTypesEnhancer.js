@@ -127,7 +127,33 @@ function expandedShapeFor(prop, indent = 0) {
   if (prop.type?.elements) {
     return prop.type.elements.map((branch) => renderShape(branch.props, indent)).join(' | ');
   }
+  if (prop.type?.parameters || prop.type?.returnType) {
+    return renderFunctionSignature(prop.type.parameters, prop.type.returnType, indent);
+  }
   return undefined;
+}
+
+/**
+ * Renders a function-shaped prop's (core's `type.parameters`/`type.
+ * returnType`) full call signature as `(param: Type, ...) => Return` —
+ * each part's own type is expanded inline via `renderShape` when core
+ * resolved it to a nested object shape (a user-defined interface, never
+ * a built-in like `MouseEvent`), the same way a plain object prop's
+ * nested fields are. A `void`/`undefined`/`any`/`unknown` return (core
+ * omits `returnType` for those) falls back to the generic `...`, same
+ * as before this had a real return type to show.
+ */
+function renderFunctionSignature(parameters, returnType, indent) {
+  const params = (parameters ?? [])
+    .map((p) => {
+      const valueType = p.type?.properties ? renderShape(p.type.properties, indent) : p.type?.name ?? 'unknown';
+      return `${p.name}${p.required ? '' : '?'}: ${valueType}`;
+    })
+    .join(', ');
+
+  const returns = returnType?.properties ? renderShape(returnType.properties, indent) : returnType?.name ?? '...';
+
+  return `(${params}) => ${returns}`;
 }
 
 /** Recursively renders a props map as a pretty-printed object shape, expanding nested properties/elements at any depth core resolved. */

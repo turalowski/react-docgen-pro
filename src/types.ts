@@ -21,10 +21,39 @@ export interface PropDescriptor {
      * alongside it, not a replacement for it.
      */
     properties?: Record<string, PropDescriptor>;
+    /**
+     * Present when this prop's type is itself a function (a named
+     * function type alias, an `interface` call signature, or an inline
+     * `(...) => ...` type) — one entry per parameter of its call
+     * signature. Each parameter's own type is expanded the same way a
+     * regular object prop's would be (via `properties`), but only when
+     * it resolves to a type declared in the user's own project —
+     * expanding a built-in like `MouseEvent` would just surface
+     * TypeScript's own lib.dom.d.ts internals, which isn't what anyone
+     * wants to see in a props table.
+     */
+    parameters?: ParameterDescriptor[];
+    /**
+     * Present alongside `parameters` — the call signature's return type,
+     * expanded via `properties` under the same user-defined-only rule.
+     */
+    returnType?: FunctionTypePart;
   };
   description?: string;
   /** From an `@default` jsdoc tag, e.g. `@default 3` -> "3" */
   defaultValue?: { value: string };
+}
+
+export interface ParameterDescriptor {
+  name: string;
+  required: boolean;
+  type: FunctionTypePart;
+}
+
+interface FunctionTypePart {
+  name: string;
+  /** Same rule as `PropDescriptor.type.properties` — only expanded for user-defined types, never for a built-in like `MouseEvent`. */
+  properties?: Record<string, PropDescriptor>;
 }
 
 export interface UnionBranch {

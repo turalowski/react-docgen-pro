@@ -92,6 +92,19 @@ function findPropsTypeFromComponentSignature(
     if (!(type.getFlags() & ts.TypeFlags.Object) && !type.isUnion() && !type.isIntersection()) {
       return;
     }
+    // A props type is a plain data shape — it never has call/construct
+    // signatures. A parameter typed `React.ComponentType<XProps>` (or
+    // `FC<...>`, `ElementType<...>`, a class reference, etc.) is *itself*
+    // union-shaped and object-flagged, so it would otherwise pass the
+    // check above and get misidentified as the props type — this is
+    // exactly what a HOC factory's first parameter looks like
+    // (`withExtraProps(WrappedComponent: React.ComponentType<Props>)`),
+    // and matching it hands back React's own static properties
+    // (`contextTypes`, `defaultProps`, ...) instead of the real props.
+    const branches = type.isUnion() ? type.types : [type];
+    if (branches.every((t) => t.getCallSignatures().length > 0 || t.getConstructSignatures().length > 0)) {
+      return;
+    }
     // Resolve documentation from the identifier actually written at
     // this reference site (e.g. "XProps" in `props: XProps`), not from
     // the resolved type's own symbol — see ResolvedPropsType.docSymbol.

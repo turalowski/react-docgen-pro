@@ -94,6 +94,16 @@ export function extractPropertiesFromType(
           )
         : undefined;
 
+    // A function-shaped prop (named function type alias, `interface`
+    // call signature, or inline `(...) => ...`) — not expanded via
+    // `properties` above (isExpandableObjectType excludes call
+    // signatures), but its parameters and return type are still worth
+    // breaking down, same idea one level in.
+    const signature =
+      !elements && !properties && expandableType && expandableType.getCallSignatures().length > 0
+        ? extractFunctionSignature(expandableType, contextNode, checker, depth, options, seen)
+        : undefined;
+
     // An inline, unnamed object type (`controls: { visible: boolean; ... }`,
     // as opposed to a named interface/type-alias reference like `user:
     // AvatarUser`) has no real identity to show as a summary — TS's own
@@ -119,6 +129,8 @@ export function extractPropertiesFromType(
         name: typeName,
         ...(elements ? { elements } : {}),
         ...(properties ? { properties } : {}),
+        ...(signature?.parameters ? { parameters: signature.parameters } : {}),
+        ...(signature?.returnType ? { returnType: signature.returnType } : {}),
       },
       description: getSymbolDescription(symbol, checker),
       ...(defaultValue !== undefined ? { defaultValue: { value: defaultValue } } : {}),
@@ -126,6 +138,96 @@ export function extractPropertiesFromType(
   }
 
   return props;
+}
+
+/**
+ * Breaks a function-shaped type's (first) call signature down into its
+ * parameters and return type, expanding either the same way a regular
+ * object prop is — but only when that type is declared in the user's
+ * own project. `checker.getPropertiesOfType` on a param or return type
+ * of `MouseEvent` would happily walk lib.dom.d.ts's ~30 fields; nobody
+ * asking about their own `onSelect: (event: SelectionEvent) => Result`
+ * wants that, but they very much do want `SelectionEvent`'s/`Result`'s
+ * own shape expanded since those are theirs.
+ *
+ * Only the first signature is used — overloaded function types are rare
+ * for a props position, and picking one deterministically beats trying
+ * to merge/pick among several.
+ */
+function extractFunctionSignature(
+  type: ts.Type,
+  contextNode: ts.Node,
+  checker: ts.TypeChecker,
+  depth: number,
+  options: ResolvedParseOptions,
+  seen: ReadonlySet<ts.Type>
+) {
+  const signature = type.getCallSignatures()[0];
+  if (!signature) return undefined;
+
+  const expandPart = (partType: ts.Type) => {
+    const { maxDepth } = options;
+    const properties =
+      depth < maxDepth &&
+      !seen.has(partType) &&
+      isExpandableObjectType(partType, checker) &&
+      isUserDefinedType(partType)
+        ? extractPropertiesFromType(
+            partType,
+            contextNode,
+            checker,
+            depth + 1,
+            options,
+            new Set(seen).add(partType)
+          )
+        : undefined;
+
+    return {
+      name: truncateTypeName(checker.typeToString(partType), options.maxTypeNameLength),
+      ...(properties ? { properties } : {}),
+    };
+  };
+
+  const parameters =
+    signature.parameters.length === 0
+      ? undefined
+      : signature.parameters.map((paramSymbol) => {
+          const paramType = checker.getTypeOfSymbolAtLocation(paramSymbol, contextNode);
+          const declaration = paramSymbol.valueDeclaration as ts.ParameterDeclaration | undefined;
+          const required = !declaration?.questionToken && !declaration?.initializer;
+
+          return { name: paramSymbol.name, required, type: expandPart(paramType) };
+        });
+
+  // Always reported, even for `void`/`undefined`/`any`/`unknown` — the
+  // signature isn't complete without it, and a caller reading a
+  // function-shaped prop's full type wants to see "=> void" rather than
+  // have the return silently vanish. `expandPart` naturally adds no
+  // `properties` for these anyway, since none of them are an
+  // expandable object shape.
+  const returnType = expandPart(checker.getReturnTypeOfSignature(signature));
+
+  return { parameters, returnType };
+}
+
+/**
+ * True when every declaration of this type's symbol lives outside
+ * TypeScript's own bundled lib files (lib.dom.d.ts, lib.es5.d.ts, ...) —
+ * that's how a built-in like `MouseEvent` or `Event` is told apart from
+ * an interface the user actually wrote, regardless of what it's named.
+ * A type with no declarations (an anonymous literal) counts as
+ * user-defined — there's nothing built-in about it.
+ */
+function isUserDefinedType(type: ts.Type): boolean {
+  const symbol = type.symbol ?? type.aliasSymbol;
+  const declarations = symbol?.getDeclarations();
+  if (!declarations || declarations.length === 0) return true;
+
+  return declarations.every((decl) => !isBuiltinLibFile(decl.getSourceFile().fileName));
+}
+
+function isBuiltinLibFile(fileName: string): boolean {
+  return /[/\\]typescript[/\\]lib[/\\]lib\.[^/\\]+\.d\.ts$/.test(fileName);
 }
 
 /**
