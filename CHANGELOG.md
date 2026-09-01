@@ -1,8 +1,6 @@
 # Changelog
 
-## 2.0.0 — 2026-09-01
-
-Initial public release. Earlier `1.0.x` / `1.0.4` versions have been unpublished from npm; `2.0.0` is the first supported version of `react-props-parser`.
+## 0.0.1 — 2026-09-01
 
 ### Features
 
