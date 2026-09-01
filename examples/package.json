@@ -18,7 +18,7 @@
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
-    "react-docgen-pro": "file:..",
+    "react-props-parser": "file:..",
     "@storybook/addon-essentials": "^8.4.0",
     "@storybook/react-vite": "^8.4.0",
     "@storybook/react-webpack5": "^8.4.0",

@@ -8,7 +8,7 @@ import type { StorybookConfig as WebpackStorybookConfig } from '@storybook/react
 const useWebpack = process.env.STORYBOOK_BUILDER === 'webpack';
 
 // STORYBOOK_DOCGEN switches which docgen engine feeds Controls/argTypes:
-// 'pro' (default) uses react-docgen-pro, wired in below via the Vite
+// 'pro' (default) uses react-props-parser, wired in below via the Vite
 // plugin / webpack loader; 'react-docgen' and 'react-docgen-typescript'
 // fall back to Storybook's own built-in parsers so the results can be
 // compared side by side — see `npm run storybook:react-docgen` /
@@ -26,11 +26,11 @@ const config: StorybookConfig = {
     // per-story wiring needed. Builder-agnostic: a preview annotation,
     // not tied to Vite's transform pipeline, so it works unchanged
     // under webpack5 too. Only relevant (and only registered) when
-    // react-docgen-pro is actually supplying the docgen info.
-    ...(usePro ? ['react-docgen-pro/vite/preset'] : []),
+    // react-props-parser is actually supplying the docgen info.
+    ...(usePro ? ['react-props-parser/vite/preset'] : []),
   ],
   typescript: {
-    // With react-docgen-pro, turn off Storybook's built-in docgen
+    // With react-props-parser, turn off Storybook's built-in docgen
     // entirely — __docgenInfo is supplied ourselves: via the Vite
     // plugin below for the Vite builder, or via the webpack loader
     // below for webpack5. Otherwise, defer to whichever of
@@ -47,7 +47,7 @@ const config: StorybookConfig = {
         if (usePro) {
           // Our docgen loader runs first (enforce: 'pre'), appending
           // plain JS to the raw source. It reads the file straight off
-          // disk via react-docgen-pro rather than the in-flight
+          // disk via react-props-parser rather than the in-flight
           // webpack source, so it doesn't actually need TSX to still
           // be valid TSX by the time it runs — only that whatever
           // text it receives still contains a recognizable
@@ -60,7 +60,7 @@ const config: StorybookConfig = {
             // Plain specifier — webpack resolves it via its own
             // node_modules resolution, no need for require.resolve
             // (which isn't available in this ESM config file anyway).
-            use: [{ loader: 'react-docgen-pro/webpack' }],
+            use: [{ loader: 'react-props-parser/webpack' }],
           });
         }
 
@@ -86,7 +86,7 @@ const config: StorybookConfig = {
     : {
       async viteFinal(viteConfig) {
         if (usePro) {
-          const { viteLoader } = await import('react-docgen-pro/vite');
+          const { viteLoader } = await import('react-props-parser/vite');
           viteConfig.plugins ??= [];
           viteConfig.plugins.push(viteLoader());
         }

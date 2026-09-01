@@ -1,8 +1,8 @@
 # Releasing
 
-Manual semver, no changesets/lerna. `react-docgen-pro` is a single
-published package — the core parser plus its Vite loader (`react-docgen-pro/vite`)
-and webpack loader (`react-docgen-pro/webpack`) subpaths all version and
+Manual semver, no changesets/lerna. `react-props-parser` is a single
+published package — the core parser plus its Vite loader (`react-props-parser/vite`)
+and webpack loader (`react-props-parser/webpack`) subpaths all version and
 publish together.
 
 ## Bumping the version
@@ -22,7 +22,7 @@ git push && git push --tags
 ## Publishing to npm
 
 This is a public, unscoped package meant to be installed the same way
-as any other npm dependency (`npm install react-docgen-pro`) — no
+as any other npm dependency (`npm install react-props-parser`) — no
 scope, no private registry, no token config needed for consumers.
 
 One-time setup (per machine that publishes):

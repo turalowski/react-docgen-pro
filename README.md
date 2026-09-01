@@ -1,4 +1,4 @@
-# react-docgen-pro
+# react-props-parser
 
 It's a typescript-aware props parser for React projects, built on the Typescript compiler API.
 
@@ -23,7 +23,7 @@ That's how this journey started.
 
 ## Comparison with react-docgen and react-docgen-typescript
 
-| Feature | react-docgen | react-docgen-typescript | react-docgen-pro |
+| Feature | react-docgen | react-docgen-typescript | react-props-parser |
 | ----- | ----- | ----- | ----- |
 | Primitive properties | renders type | renders type | renders type |
 | Named interface | renders only name of interface (unable to see the structure) | renders only name of interface (unable to see the structure) | renders name of interface, clickable to see the structure of the interface |
@@ -39,9 +39,10 @@ That's how this journey started.
 | Anonymous function | renders string with arguments and return type | renders string with arguments and return type | renders clickable string to show detailed type | 
 | Anonymous function with interface argument | renders string with name of interface | renders string with name of interface | renders clickable string with popup to show structure of interface | 
 | forwardRef | same output with above mentioned details | same output with above mentioned details | same output with above mentioned details |
-| HOC | x | x | x |
+| HOC | unable to render props | unable to render props | renders all props of the main component |
+| HOC with extra props | renders only extra props | renders only extra props | renders all props of the main component and extra props |
 
-Here is the visual version of comparison of these 3 tools (from left to right: react-docgen, react-docgen-typescript, react-docgen-pro):
+Here is the visual version of comparison of these 3 tools (from left to right: react-docgen, react-docgen-typescript, react-props-parser):
 
 Basic Component:
 
@@ -60,14 +61,14 @@ use. If you just want the parsed props as JSON, call `parse()` directly:
 ## Using it with Storybook + Vite
 
 ```bash
-npm install --save-dev react-docgen-pro
+npm install --save-dev react-props-parser
 ```
 
 In `.storybook/main.ts`:
 
 ```ts
 import type { StorybookConfig } from '@storybook/react-vite';
-import { viteLoader } from 'react-docgen-pro/vite';
+import { viteLoader } from 'react-props-parser/vite';
 
 const config: StorybookConfig = {
   framework: '@storybook/react-vite',
@@ -76,10 +77,10 @@ const config: StorybookConfig = {
     // Registers a Storybook argTypesEnhancer that hides Controls fields
     // from non-active union branches and fills in branch-specific
     // descriptions — runs automatically for every story.
-    'react-docgen-pro/vite/preset',
+    'react-props-parser/vite/preset',
   ],
   typescript: {
-    // Turn off Storybook's built-in docgen — react-docgen-pro supplies
+    // Turn off Storybook's built-in docgen — react-props-parser supplies
     // __docgenInfo itself via the plugin below.
     reactDocgen: false,
   },
@@ -99,7 +100,7 @@ export default config;
 ## Using it with Storybook + webpack
 
 ```bash
-npm install --save-dev react-docgen-pro
+npm install --save-dev react-props-parser
 ```
 
 In `.storybook/main.ts`:
@@ -112,7 +113,7 @@ const config: StorybookConfig = {
   addons: [
     '@storybook/addon-essentials',
     // Same preset used by the Vite setup — it's builder-agnostic.
-    'react-docgen-pro/vite/preset',
+    'react-props-parser/vite/preset',
   ],
   typescript: {
     reactDocgen: false,
@@ -124,9 +125,9 @@ const config: StorybookConfig = {
       test: /\.tsx$/,
       exclude: /node_modules/,
       enforce: 'pre',
-      // `options` here is react-docgen-pro's own ParseOptions, forwarded
+      // `options` here is react-props-parser's own ParseOptions, forwarded
       // to every parse() call — same fields as the Vite loader above.
-      use: [{ loader: 'react-docgen-pro/webpack', options: { maxTypeNameLength: 80 } }],
+      use: [{ loader: 'react-props-parser/webpack', options: { maxTypeNameLength: 80 } }],
     });
     return webpackConfig;
   },
@@ -151,7 +152,7 @@ same `ParseOptions` object accepted by `parse()` directly:
 | `maxDepth`           | `2`     | How many levels of nested object props get expanded into `type.properties`.                         |
 
 ```ts
-import { parse } from 'react-docgen-pro';
+import { parse } from 'react-props-parser';
 
 const doc = parse('./Button.tsx', { maxTypeNameLength: 80 });
 ```

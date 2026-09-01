@@ -1,5 +1,5 @@
 {
-  "name": "react-docgen-pro",
+  "name": "react-props-parser",
   "version": "2.0.0",
   "description": "TypeScript-aware React props parser: expands discriminated unions, unions of objects, and nested object props into structured data (via the TypeScript compiler API) instead of stringifying types like react-docgen-typescript does. Ships with a Vite plugin and a webpack loader for wiring the parsed docgen info into Storybook.",
   "publishConfig": {
@@ -38,11 +38,11 @@
   ],
   "license": "MIT",
   "author": "Tural Hajiyev",
-  "homepage": "https://github.com/turalowski/react-docgen-pro#readme",
-  "bugs": "https://github.com/turalowski/react-docgen-pro/issues",
+  "homepage": "https://github.com/turalowski/react-props-parser#readme",
+  "bugs": "https://github.com/turalowski/react-props-parser/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/turalowski/react-docgen-pro.git"
+    "url": "https://github.com/turalowski/react-props-parser.git"
   },
   "workspaces": [
     "examples"

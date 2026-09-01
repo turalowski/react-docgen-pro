@@ -1,9 +1,9 @@
-import { parse } from 'react-docgen-pro';
+import { parse } from 'react-props-parser';
 
 export { argTypesForVariant } from './argTypes.js';
 
 /**
- * Minimal Vite plugin: for each .tsx file, runs it through react-docgen-pro's
+ * Minimal Vite plugin: for each .tsx file, runs it through react-props-parser's
  * parse() and appends `ComponentName.__docgenInfo = {...}` to the
  * transformed module — the same static-property convention Storybook's
  * addon-docs / ArgsTable already reads from
@@ -16,7 +16,7 @@ export { argTypesForVariant } from './argTypes.js';
  * end, but see findComponentNames' own comment for a real limitation
  * this has on files with multiple differently-scoped exports.
  *
- * @param {import('react-docgen-pro').ParseOptions} [options] Forwarded
+ * @param {import('react-props-parser').ParseOptions} [options] Forwarded
  * as-is to every `parse()` call — e.g. `viteLoader({ maxTypeNameLength: 80 })`.
  */
 export function viteLoader(options) {

@@ -1,8 +1,8 @@
-import { parse } from 'react-docgen-pro';
+import { parse } from 'react-props-parser';
 
 /**
  * Webpack loader equivalent of the vite loader (src/vite/index.js): same
- * job (parse the file via react-docgen-pro, inject __docgenInfo onto the
+ * job (parse the file via react-props-parser, inject __docgenInfo onto the
  * component so Storybook's addon-docs/Controls can read it), but
  * wired in via webpackFinal's module.rules instead of a Vite
  * transform hook, since Storybook's webpack5 builder doesn't go
@@ -21,10 +21,10 @@ import { parse } from 'react-docgen-pro';
  * on the other's internals.
  *
  * Loader options (e.g. `{ maxTypeNameLength: 80 }`) are set on the
- * rule itself — `use: [{ loader: 'react-docgen-pro/webpack', options: {...} }]`
+ * rule itself — `use: [{ loader: 'react-props-parser/webpack', options: {...} }]`
  * — and read here via the standard webpack 5 `this.getOptions()`, then
  * forwarded as-is to `parse()`. No schema validation: this loader
- * takes exactly react-docgen-pro's own `ParseOptions` shape, so a
+ * takes exactly react-props-parser's own `ParseOptions` shape, so a
  * typo here just surfaces the same way a bad `parse()` call would.
  */
 export default function webpackLoader(source) {
