@@ -69,7 +69,19 @@ function findDiscriminant(branches: ts.Type[], checker: ts.TypeChecker): string 
     const valuesAreAllLiteral = branches.every((branch) => {
       const symbol = checker.getPropertyOfType(branch, propName);
       if (!symbol) return false;
-      const propType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration ?? branch.symbol.valueDeclaration!);
+      // Prefer a location (the property's own declaration, falling back to
+      // the branch type's) so getTypeOfSymbolAtLocation can resolve
+      // location-dependent constructs (e.g. `this` types) correctly. But
+      // a branch that isn't a plain named interface — an intersection or
+      // a resolved indexed-access/mapped type, both common when a prop's
+      // fields are typed via `OtherProps['field']` — has no `.symbol` at
+      // all, and a property reached through it may have no
+      // `valueDeclaration` either. In that case fall back to the
+      // location-less lookup rather than crash.
+      const location = symbol.valueDeclaration ?? branch.symbol?.valueDeclaration;
+      const propType = location
+        ? checker.getTypeOfSymbolAtLocation(symbol, location)
+        : checker.getTypeOfSymbol(symbol);
       return propType.isLiteral();
     });
     if (valuesAreAllLiteral) return propName;
@@ -81,6 +93,11 @@ function findDiscriminant(branches: ts.Type[], checker: ts.TypeChecker): string 
 function literalPropValue(branch: ts.Type, propName: string, checker: ts.TypeChecker): string {
   const symbol = checker.getPropertyOfType(branch, propName);
   if (!symbol) return '';
-  const propType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration ?? branch.symbol.valueDeclaration!);
+  // See the matching fallback in findDiscriminant above for why a plain
+  // `branch.symbol.valueDeclaration!` isn't safe here.
+  const location = symbol.valueDeclaration ?? branch.symbol?.valueDeclaration;
+  const propType = location
+    ? checker.getTypeOfSymbolAtLocation(symbol, location)
+    : checker.getTypeOfSymbol(symbol);
   return checker.typeToString(propType);
 }
