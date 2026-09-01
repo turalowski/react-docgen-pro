@@ -9,7 +9,7 @@ export default meta;
 
 type Story = StoryObj<typeof HigherOrderComponent>;
 
-export const WithHigherOrderComponent: Story = {
+export const HOC: Story = {
   name: '3. Higher Order Component',
   args: {
     label: 'Simple Component wrapped with a higher order component',

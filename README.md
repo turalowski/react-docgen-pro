@@ -34,12 +34,22 @@ That's how this journey started.
 | Union interfaces | renders 'union' keyword | renders name of interfaces | renders clickable names of interfaces, click to see the type of each |
 | Nested interfaces | shows only name of interface | shows only name of interface | clickable name of interface, click to see the structure |
 | Utility functions (Pick, Omit, Partial, Required) | renders name of utility function ('Pick', 'Omit', etc.) | renders the definition, e.g. `Pick<FirstAction, "type">` | renders clickable definition, click to see the structure |
-| forwardRef | x | x | x |
+| Function with interface call signature | renders only name of the interface | renders only name of the interface | renders name of the interface with popup to show arguments and return type | 
+| Named function type | renders string with arguments and return type | renders string with arguments and return type | renders name of interface, with popup to show function arguments and return type | 
+| Anonymous function | renders string with arguments and return type | renders string with arguments and return type | renders clickable string to show detailed type | 
+| Anonymous function with interface argument | renders string with name of interface | renders string with name of interface | renders clickable string with popup to show structure of interface | 
+| forwardRef | same output with above mentioned details | same output with above mentioned details | same output with above mentioned details |
 | HOC | x | x | x |
 
 Here is the visual version of comparison of these 3 tools (from left to right: react-docgen, react-docgen-typescript, react-docgen-pro):
 
-![Comparison](./comparison.png)
+Basic Component:
+
+![Comparison-1](./comparison-1.png)
+
+With HOC:
+
+![Comparison-2](./comparison-2.png)
 
 ## Quick start
 
