@@ -69,14 +69,25 @@ export default function webpackLoader(source) {
   // their real prop types differ (e.g. an internal-only export vs. its
   // public-facing wrapper) — a real per-export fix needs core to
   // resolve props per named export, not just once per file.
+  // Emit the (potentially large, deeply-nested-object-props-heavy)
+  // payload as a single shared `const` rather than inlining
+  // JSON.stringify(documentation) once per name — interpolating it into
+  // each per-name injection would re-embed the full literal N times in
+  // the emitted source for a file with N plausible exports, which for a
+  // component with a few levels of nested/union props can add hundreds
+  // of KB per copy and is enough on its own to push a file over Babel's
+  // codegen deoptimization threshold. Only `displayName` varies per
+  // name, so each injection spreads the shared base and overrides just
+  // that.
+  const baseVarName = '__reactPropsParserDocgenInfo';
   const injections = componentNames
-    .map((name) => {
-      const docgenInfo = { ...documentation, displayName: name };
-      return `try { ${name}.__docgenInfo = ${JSON.stringify(docgenInfo)}; } catch (e) {}`;
-    })
+    .map(
+      (name) =>
+        `try { ${name}.__docgenInfo = { ...${baseVarName}, displayName: ${JSON.stringify(name)} }; } catch (e) {}`
+    )
     .join('\n');
 
-  return `${source}\n${injections}\n`;
+  return `${source}\nconst ${baseVarName} = ${JSON.stringify(documentation)};\n${injections}\n`;
 }
 
 function findComponentNames(code) {
